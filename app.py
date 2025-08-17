@@ -10,26 +10,34 @@ def check_and_run_code(language, code, program_input):
             with open(java_file, "w") as f:
                 f.write(code)
 
-            compile_proc = subprocess.run(["javac", java_file],
-                                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            # Compile
+            compile_proc = subprocess.run(
+                ["javac", java_file],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
             if compile_proc.returncode != 0:
                 return compile_proc.stderr, None
 
-            run_proc = subprocess.run(["java", "-cp", tmpdir, "Main"],
-                                      input=program_input,
-                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            # Run
+            run_proc = subprocess.run(
+                ["java", "-cp", tmpdir, "Main"],
+                input=program_input,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
             return "✅ Java code is syntactically correct.", run_proc.stdout if run_proc.stdout else run_proc.stderr
 
     elif language == "python":
         try:
-            compile(code, "<string>", "exec")
+            compile(code, "<string>", "exec")  # Syntax check
             with tempfile.NamedTemporaryFile(delete=False, suffix=".py") as tmpfile:
                 tmpfile.write(code.encode("utf-8"))
                 tmpfile_path = tmpfile.name
 
-            run_proc = subprocess.run(["python", tmpfile_path],
-                                      input=program_input,
-                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            run_proc = subprocess.run(
+                ["python", tmpfile_path],
+                input=program_input,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
             return "✅ Python code is syntactically correct.", run_proc.stdout if run_proc.stdout else run_proc.stderr
         except SyntaxError as e:
             return str(e), None
@@ -39,9 +47,11 @@ def check_and_run_code(language, code, program_input):
             tmpfile.write(code.encode("utf-8"))
             tmpfile_path = tmpfile.name
 
-        run_proc = subprocess.run(["node", tmpfile_path],
-                                  input=program_input,
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        run_proc = subprocess.run(
+            ["node", tmpfile_path],
+            input=program_input,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
         if run_proc.returncode == 0:
             return "✅ JavaScript code is syntactically correct.", run_proc.stdout
         else:
@@ -54,14 +64,18 @@ def check_and_run_code(language, code, program_input):
             with open(c_file, "w") as f:
                 f.write(code)
 
-            compile_proc = subprocess.run(["gcc", c_file, "-o", exe_file],
-                                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            compile_proc = subprocess.run(
+                ["gcc", c_file, "-o", exe_file],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
             if compile_proc.returncode != 0:
                 return compile_proc.stderr, None
 
-            run_proc = subprocess.run([exe_file],
-                                      input=program_input,
-                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            run_proc = subprocess.run(
+                [exe_file],
+                input=program_input,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
             return "✅ C code is syntactically correct.", run_proc.stdout if run_proc.stdout else run_proc.stderr
 
     return "❌ Language not supported", None
@@ -79,7 +93,14 @@ def index():
         code = request.form["code"]
         program_input = request.form["program_input"]
         result, output = check_and_run_code(language, code, program_input)
-    return render_template("index.html", result=result, output=output, code=code, program_input=program_input, language=language)
+    return render_template(
+        "index.html",
+        result=result,
+        output=output,
+        code=code,
+        program_input=program_input,
+        language=language
+    )
 
 
 if __name__ == "__main__":
