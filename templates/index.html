@@ -2,39 +2,607 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Multi-Language Code Runner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Code Compiler</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/eclipse.min.css">
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #f8f9fa; }
-        textarea { width: 100%; height: 200px; margin-bottom: 10px; font-family: monospace; }
-        select, button { padding: 8px; margin-bottom: 15px; }
-        .output-box { background: #eee; padding: 10px; border-radius: 5px; white-space: pre; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+        
+        body.dark-mode {
+            background: #1e1e1e;
+        }
+        
+        /* Top Navigation Bar */
+        .navbar {
+            background: #2c3e50;
+            color: white;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            height: 50px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        body.dark-mode .navbar {
+            background: #1a1a1a;
+        }
+        
+        .navbar .logo {
+            font-size: 20px;
+            font-weight: bold;
+            margin-right: 30px;
+            color: #3498db;
+        }
+        
+        .navbar .nav-item {
+            margin-right: 20px;
+            color: #ecf0f1;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        /* Toolbar */
+        .toolbar {
+            background: #34495e;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #2c3e50;
+            flex-wrap: wrap;
+        }
+        
+        body.dark-mode .toolbar {
+            background: #252526;
+            border-bottom: 1px solid #1a1a1a;
+        }
+        
+        .toolbar select,
+        .toolbar button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .toolbar select {
+            background: #2c3e50;
+            color: white;
+            border: 1px solid #1a252f;
+        }
+        
+        body.dark-mode .toolbar select {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+        }
+        
+        .toolbar button {
+            background: #27ae60;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .toolbar button:hover {
+            background: #229954;
+            transform: translateY(-1px);
+        }
+        
+        .toolbar .btn-run {
+            background: #27ae60;
+            padding: 8px 25px;
+        }
+        
+        .toolbar .btn-secondary {
+            background: #7f8c8d;
+        }
+        
+        .toolbar .btn-secondary:hover {
+            background: #6c7a7b;
+        }
+        
+        .toolbar .btn-clear {
+            background: #e74c3c;
+        }
+        
+        .toolbar .btn-clear:hover {
+            background: #c0392b;
+        }
+        
+        .dark-mode-btn {
+            background: #f39c12 !important;
+            margin-left: auto;
+        }
+        
+        .dark-mode-btn:hover {
+            background: #e67e22 !important;
+        }
+        
+        /* Main Container */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 110px);
+            background: #ecf0f1;
+        }
+        
+        body.dark-mode .main-container {
+            background: #1e1e1e;
+        }
+        
+        /* Left Panel - Editor */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-right: 1px solid #bdc3c7;
+        }
+        
+        body.dark-mode .editor-panel {
+            background: #1e1e1e;
+            border-right: 1px solid #3e3e42;
+        }
+        
+        .panel-header {
+            background: #ecf0f1;
+            padding: 10px 15px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #2c3e50;
+            border-bottom: 1px solid #bdc3c7;
+        }
+        
+        body.dark-mode .panel-header {
+            background: #252526;
+            color: #cccccc;
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .editor-wrapper {
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .CodeMirror {
+            height: 100%;
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        
+        /* Right Panel - Input/Output */
+        .io-panel {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        body.dark-mode .io-panel {
+            background: #1e1e1e;
+        }
+        
+        .input-section,
+        .output-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid #bdc3c7;
+        }
+        
+        body.dark-mode .input-section,
+        body.dark-mode .output-section {
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .input-section {
+            max-height: 30%;
+        }
+        
+        .output-section {
+            flex: 2;
+        }
+        
+        .input-area,
+        .output-area {
+            flex: 1;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            border: none;
+            resize: none;
+            background: white;
+            color: #2c3e50;
+        }
+        
+        body.dark-mode .input-area,
+        body.dark-mode .output-area {
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        
+        .output-area {
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 5px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            height: 30px;
+        }
+        
+        body.dark-mode .status-bar {
+            background: #007acc;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .status-success {
+            color: #2ecc71;
+        }
+        
+        .status-error {
+            color: #e74c3c;
+        }
+        
+        /* History Sidebar */
+        .history-sidebar {
+            width: 250px;
+            background: #ecf0f1;
+            border-left: 1px solid #bdc3c7;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        body.dark-mode .history-sidebar {
+            background: #252526;
+            border-left: 1px solid #3e3e42;
+        }
+        
+        .history-sidebar.show {
+            display: block;
+        }
+        
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid #bdc3c7;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        body.dark-mode .history-item {
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .history-item:hover {
+            background: #d5dbdb;
+        }
+        
+        body.dark-mode .history-item:hover {
+            background: #2a2d2e;
+        }
+        
+        .history-item .lang {
+            font-weight: 600;
+            color: #3498db;
+            font-size: 12px;
+        }
+        
+        .history-item .time {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+        
+        .history-item .code-preview {
+            font-size: 11px;
+            color: #555;
+            margin-top: 5px;
+            font-family: monospace;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        body.dark-mode .history-item .code-preview {
+            color: #999;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .io-panel {
+                width: 100%;
+                height: 40%;
+            }
+            
+            .history-sidebar {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Multi-Language Code Runner 🌍</h1>
-    <form method="post">
-        <label for="language">Select Language:</label>
-        <select name="language" id="language">
-            <option value="java" {% if language == 'java' %}selected{% endif %}>Java</option>
-            <option value="python" {% if language == 'python' %}selected{% endif %}>Python</option>
-            <option value="javascript" {% if language == 'javascript' %}selected{% endif %}>JavaScript</option>
-            <option value="c" {% if language == 'c' %}selected{% endif %}>C</option>
-        </select><br>
-
-        <label for="code">Enter Code:</label>
-        <textarea name="code" id="code">{{ code }}</textarea>
-
-        <label for="program_input">Program Input (optional):</label>
-        <textarea name="program_input" id="program_input" style="height:100px;">{{ program_input }}</textarea>
-
-        <button type="submit">Run Code ▶️</button>
+    <!-- Top Navigation -->
+    <div class="navbar">
+        <div class="logo">⚡ OnlineIDE</div>
+        <a href="#" class="nav-item">Compiler</a>
+        <a href="#" class="nav-item">IDE</a>
+        <a href="#" class="nav-item">About</a>
+    </div>
+    
+    <!-- Toolbar -->
+    <form method="post" id="codeForm">
+        <div class="toolbar">
+            <select name="language" id="language" onchange="updateEditorMode()">
+                <option value="java" {% if language == 'java' %}selected{% endif %}>Java</option>
+                <option value="python" {% if language == 'python' %}selected{% endif %}>Python</option>
+                <option value="javascript" {% if language == 'javascript' %}selected{% endif %}>JavaScript (Node.js)</option>
+                <option value="c" {% if language == 'c' %}selected{% endif %}>C (GCC)</option>
+                <option value="cpp" {% if language == 'cpp' %}selected{% endif %}>C++ (G++)</option>
+                <option value="csharp" {% if language == 'csharp' %}selected{% endif %}>C# (Mono)</option>
+                <option value="ruby" {% if language == 'ruby' %}selected{% endif %}>Ruby</option>
+                <option value="php" {% if language == 'php' %}selected{% endif %}>PHP</option>
+                <option value="go" {% if language == 'go' %}selected{% endif %}>Go</option>
+                <option value="rust" {% if language == 'rust' %}selected{% endif %}>Rust</option>
+                <option value="bash" {% if language == 'bash' %}selected{% endif %}>Bash</option>
+                <option value="perl" {% if language == 'perl' %}selected{% endif %}>Perl</option>
+                <option value="r" {% if language == 'r' %}selected{% endif %}>R</option>
+                <option value="kotlin" {% if language == 'kotlin' %}selected{% endif %}>Kotlin</option>
+                <option value="swift" {% if language == 'swift' %}selected{% endif %}>Swift</option>
+                <option value="scala" {% if language == 'scala' %}selected{% endif %}>Scala</option>
+                <option value="lua" {% if language == 'lua' %}selected{% endif %}>Lua</option>
+                <option value="typescript" {% if language == 'typescript' %}selected{% endif %}>TypeScript</option>
+                <option value="dart" {% if language == 'dart' %}selected{% endif %}>Dart</option>
+                <option value="fortran" {% if language == 'fortran' %}selected{% endif %}>Fortran</option>
+                <option value="cobol" {% if language == 'cobol' %}selected{% endif %}>Cobol</option>
+                <option value="pascal" {% if language == 'pascal' %}selected{% endif %}>Pascal</option>
+                <option value="haskell" {% if language == 'haskell' %}selected{% endif %}>Haskell</option>
+                <option value="objectivec" {% if language == 'objectivec' %}selected{% endif %}>Objective-C</option>
+                <option value="assembly" {% if language == 'assembly' %}selected{% endif %}>Assembly (NASM)</option>
+                <option value="prolog" {% if language == 'prolog' %}selected{% endif %}>Prolog</option>
+                <option value="lisp" {% if language == 'lisp' %}selected{% endif %}>Common Lisp</option>
+                <option value="scheme" {% if language == 'scheme' %}selected{% endif %}>Scheme</option>
+                <option value="erlang" {% if language == 'erlang' %}selected{% endif %}>Erlang</option>
+                <option value="elixir" {% if language == 'elixir' %}selected{% endif %}>Elixir</option>
+                <option value="clojure" {% if language == 'clojure' %}selected{% endif %}>Clojure</option>
+                <option value="fsharp" {% if language == 'fsharp' %}selected{% endif %}>F#</option>
+                <option value="vb" {% if language == 'vb' %}selected{% endif %}>Visual Basic</option>
+            </select></option>""
+            
+            <button type="submit" class="btn-run">Run</button>
+            <button type="button" onclick="loadTemplate()" class="btn-secondary">New</button>
+            <button type="button" onclick="downloadOutput()" class="btn-secondary">Save Output</button>
+            <button type="button" onclick="toggleHistory()" class="btn-secondary">History</button>
+            <button type="button" onclick="clearHistory()" class="btn-clear">clear History</button>
+            <button type="button" onclick="toggleDarkMode()" class="dark-mode-btn">Theme</button>
+        </div>
+    
+        <!-- Main Container -->
+        <div class="main-container">
+            <!-- Editor Panel -->
+            <div class="editor-panel">
+                <div class="panel-header">Source Code</div>
+                <div class="editor-wrapper">
+                    <textarea name="code" id="code">{{ code }}</textarea>
+                </div>
+            </div>
+            
+            <!-- Input/Output Panel -->
+            <div class="io-panel">
+                <div class="input-section">
+                    <div class="panel-header">Input (stdin)</div>
+                    <textarea name="program_input" id="program_input" class="input-area">{{ program_input }}</textarea>
+                </div>
+            
+                <div class="output-section">
+                    <div class="panel-header">Output</div>
+                    <div class="output-area" id="outputArea">{{ output if output else 'Click "Run" to see output here...' }}</div>
+                </div>
+            </div>
+            
+            <!-- History Sidebar -->
+            <div class="history-sidebar" id="historySidebar"></div>
+            <div class="panel-header">Execution History</div>
+            {% if history %}
+                {% for item in history %}
+                <div class="history-item">
+                    <div class="lang">{{ item.language|upper }} {% if item.success %}✅{% else %}❌{% endif %}</div>
+                    <div class="time">{{ item.timestamp }}</div>
+                    <div class="code-preview">{{ item.code }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="padding: 20px; text-align: center; color: #7f8c8d; font-size: 13px;">
+                    No history yet
+                </div>
+            {% endif %}
+            </div>
+        </div>
     </form>
-
-    {% if result %}
-        <h2>Result:</h2>
-        <p>{{ result }}</p>
-        <h2>Output:</h2>
-        <div class="output-box">{{ output }}</div>
-    {% endif %}
+    
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            {% if result %}
+                <span class="{% if '✅' in result %}status-success{% else %}status-error{% endif %}">
+                    {{ result }}
+                </span>
+                {% if exec_time %}
+                <span>⏱️ {{ "%.3f"|format(exec_time) }}s</span>
+                {% endif %}
+            {% else %}
+                <span>Ready</span>
+            {% endif %}
+        </div>
+        <div class="status-item">
+            <span id="languageStatus">{{ language|upper }}</span>
+        </div>
+    </div>
+    
+    <script id="templates-data" type="application/json">{{ templates|tojson|safe }}</script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/ruby/ruby.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/php/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/go/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/rust/rust.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/shell/shell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/perl/perl.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/r/r.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/swift/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/lua/lua.min.js"></script>
+    
+    <script></script>
+        const templates = JSON.parse(document.getElementById('templates-data').textContent);
+        
+        // Initialize CodeMirror
+        const codeEditor = CodeMirror.fromTextArea(document.getElementById('code'), {
+            lineNumbers: true,
+            mode: 'text/x-java',
+            theme: 'eclipse',
+            indentUnit: 4,
+            lineWrapping: true,
+            tabSize: 4,
+            indentWithTabs: false
+        });
+        
+        // Update mode based on language
+        function updateEditorMode() {
+            const language = document.getElementById('language').value;
+            const modes = {
+                'java': 'text/x-java',
+                'python': 'text/x-python',
+                'javascript': 'text/javascript',
+                'c': 'text/x-csrc',
+                'cpp': 'text/x-c++src',
+                'csharp': 'text/x-csharp',
+                'ruby': 'text/x-ruby',
+                'php': 'application/x-httpd-php',
+                'go': 'text/x-go',
+                'rust': 'text/x-rustsrc',
+                'bash': 'text/x-sh',
+                'perl': 'text/x-perl',
+                'r': 'text/x-rsrc',
+                'kotlin': 'text/x-kotlin',
+                'swift': 'text/x-swift',
+                'scala': 'text/x-scala',
+                'lua': 'text/x-lua',
+                'typescript': 'application/typescript',
+                'dart': 'application/dart',
+                'fortran': 'text/x-fortran',
+                'cobol': 'text/x-cobol',
+                'pascal': 'text/x-pascal',
+                'haskell': 'text/x-haskell',
+                'objectivec': 'text/x-objectivec',
+                'assembly': 'text/x-nasm',
+                'prolog': 'text/x-prolog',
+                'lisp': 'text/x-common-lisp',
+                'scheme': 'text/x-scheme',
+                'erlang': 'text/x-erlang',
+                'elixir': 'text/x-elixir',
+                'clojure': 'text/x-clojure',
+                'fsharp': 'text/x-fsharp',
+                'vb': 'text/x-vb'
+            };
+            codeEditor.setOption('mode', modes[language] || 'text/plain');
+            document.getElementById('languageStatus').textContent = language.toUpperCase();
+        }
+        
+        // Load template
+        function loadTemplate() {
+            const language = document.getElementById('language').value;
+            if (templates[language]) {
+                codeEditor.setValue(templates[language]);
+            }
+            updateEditorMode();
+        }
+        
+        // Dark mode toggle
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            codeEditor.setOption('theme', isDark ? 'monokai' : 'eclipse');
+            localStorage.setItem('darkMode', isDark);
+        }
+        
+        // Load dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            toggleDarkMode();
+        }
+        
+        // Toggle history sidebar
+        function toggleHistory() {
+            document.getElementById('historySidebar').classList.toggle('show');
+        }
+        
+        // Download output
+        function downloadOutput() {
+            const output = document.getElementById('outputArea').textContent;
+            if (!output || output === 'Click "Run" to see output here...') {
+                alert('No output to download!');
+                return;
+            }
+            const blob = new Blob([output], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'output.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Clear history
+        function clearHistory() {
+            if (confirm('Clear all execution history?')) {
+                fetch('/clear_history', { method: 'POST' })
+                    .then(() => location.reload());
+            }
+        }
+        
+        // Sync CodeMirror with form submission
+        document.getElementById('codeForm').addEventListener('submit', function() {
+            document.getElementById('code').value = codeEditor.getValue();
+        });
+        
+        // Initialize editor mode
+        updateEditorMode();
+        
+        // Auto-resize editor
+        window.addEventListener('resize', function() {
+            codeEditor.refresh();
+        });
+    </script>
 </body>
 </html>
