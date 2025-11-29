@@ -4,15 +4,25 @@ A powerful web-based IDE supporting 35 programming languages with syntax highlig
 
 ## ✨ Features
 
-- **35 Programming Languages** supported
+### Core Features
+- **33+ Programming Languages** supported
 - **Syntax Highlighting** with CodeMirror
 - **Dark/Light Theme** toggle
 - **Execution History** tracking
 - **Code Templates** for quick start
 - **Execution Time** measurement
-- **Download Output** functionality
 - **Split-panel Layout** (editor + input/output)
 - **Real-time Code Execution**
+
+### 🆕 Online GDB Features (v2.0.0)
+- **🔗 Code Sharing** - Generate shareable links for your code
+- **📁 File Upload/Download** - Import and export code files
+- **📚 Code Snippets Library** - Save and manage your favorite snippets
+- **📊 Code Analysis** - Get statistics about your code
+- **💾 Output Download** - Save execution results
+- **📦 Project Export** - Export multiple files as ZIP
+
+📖 **See [FEATURES.md](FEATURES.md) for complete feature documentation**
 
 ## 🌐 Supported Languages
 
@@ -129,12 +139,21 @@ For detailed installation instructions for each language, see [INSTALLATION_GUID
 
 ## 🎯 Usage
 
+### Basic Usage
 1. **Select Language**: Choose from the dropdown menu
 2. **Write Code**: Use the code editor with syntax highlighting
 3. **Add Input**: (Optional) Provide stdin input in the input panel
 4. **Run Code**: Click the "▶ Run" button
 5. **View Output**: See results in the output panel
-6. **Check History**: Click "📜 History" to see recent executions
+
+### Advanced Features
+- **🔗 Share Code**: Click "Share" to generate a shareable link
+- **📁 Upload File**: Click "Upload" to import code from your computer
+- **💾 Download**: Click "Download" to save your code
+- **📚 Snippets**: Save frequently used code for quick access
+- **📊 Analyze**: Get code statistics (lines, functions, classes)
+- **🕒 History**: View your last 10 executions
+- **🌙 Theme**: Toggle between light and dark modes
 
 ### Keyboard Shortcuts
 - **Ctrl/Cmd + S**: Save output
@@ -146,17 +165,33 @@ For detailed installation instructions for each language, see [INSTALLATION_GUID
 ### Code Templates
 Click "📄 New" to load a Hello World template for the selected language.
 
-### Dark Mode
-Toggle between light and dark themes with the "🌙 Theme" button. Your preference is saved.
+### Code Sharing 🔗
+Generate unique shareable links for your code. The link is automatically copied to your clipboard and can be shared with anyone.
 
-### Execution History
+### File Management 📁
+- **Upload**: Import code files (`.py`, `.java`, `.js`, `.c`, `.cpp`, etc.)
+- **Download**: Save your code with the correct file extension
+
+### Code Snippets Library 📚
+Save your frequently used code snippets with custom names. Access them anytime from the snippets sidebar.
+
+### Code Analysis 📊
+Get instant statistics about your code:
+- Total lines and non-empty lines
+- Character and word count
+- Function and class detection
+- Import statement counting
+
+### Dark Mode 🌙
+Toggle between light and dark themes with the "Theme" button. Your preference is saved.
+
+### Execution History 🕒
 View your last 10 code executions with timestamps and success/failure indicators.
 
-### Download Output
-Save execution results to a text file with the "💾 Save Output" button.
-
-### Execution Time
+### Execution Time ⏱️
 See how long your code takes to run (displayed in seconds).
+
+📖 **For detailed feature documentation, see [FEATURES.md](FEATURES.md)**
 
 ## 🛠️ Project Structure
 
@@ -168,12 +203,17 @@ See how long your code takes to run (displayed in seconds).
 ├── static/
 │   ├── style.css            # Additional styles
 │   └── *.png                # Screenshots
+├── uploads/                  # Uploaded files directory
+├── shared_codes/             # Shared code storage
 ├── test_app.py              # System check script
 ├── requirements.txt         # Python dependencies
 ├── start.bat                # Windows startup script
 ├── start.sh                 # Linux/macOS startup script
 ├── QUICKSTART.md            # Quick start guide
 ├── INSTALLATION_GUIDE.md    # Detailed installation guide
+├── FEATURES.md              # Complete feature documentation
+├── CHANGELOG.md             # Version history
+├── PROJECT_STATUS.md        # Project status and roadmap
 ├── README.md                # This file
 └── .gitignore               # Git ignore rules
 ```
@@ -242,6 +282,32 @@ For issues and questions:
 - Check [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)
 - Run `python check_languages.py` to diagnose issues
 - Refer to official documentation for each language
+
+---
+
+## 📚 Documentation
+
+### Getting Started
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide for beginners
+- **[USER_GUIDE.md](USER_GUIDE.md)** - Complete walkthrough of all features
+- **[INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)** - Detailed language installation
+
+### Features & Reference
+- **[FEATURES.md](FEATURES.md)** - Complete feature list and usage guide
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick reference for all features
+- **[COMPARISON.md](COMPARISON.md)** - Comparison with Online GDB
+
+### Technical Documentation
+- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Complete API reference
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and updates
+- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Project status and roadmap
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Implementation details
+
+## 🎯 Version
+
+**Current Version**: 2.0.0  
+**Release Date**: November 29, 2025  
+**Status**: Production Ready - Feature Complete
 
 ---
 

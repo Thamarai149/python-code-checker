@@ -45,3 +45,12 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# Uploads and Shared Codes
+uploads/
+shared_codes/
+*.tmp
+*.temp
+
+# User Data
+*.session

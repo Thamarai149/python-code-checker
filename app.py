@@ -1,10 +1,21 @@
-from flask import Flask, render_template, request, session, jsonify
+from flask import Flask, render_template, request, session, jsonify, send_file, url_for
 import subprocess, tempfile, os
 import time
 from datetime import datetime
+import json
+import hashlib
+import io
+import zipfile
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here-change-in-production'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['UPLOAD_FOLDER'] = 'uploads'
+
+# Create uploads directory if it doesn't exist
+os.makedirs('uploads', exist_ok=True)
+os.makedirs('shared_codes', exist_ok=True)
 
 # Code templates for each language
 CODE_TEMPLATES = {
@@ -852,6 +863,227 @@ def index():
 def clear_history():
     session['history'] = []
     return jsonify({'success': True})
+
+
+@app.route("/share", methods=["POST"])
+def share_code():
+    """Generate shareable link for code"""
+    data = request.json
+    code = data.get('code', '')
+    language = data.get('language', 'python')
+    program_input = data.get('input', '')
+    
+    # Generate unique hash for the code
+    code_hash = hashlib.md5(f"{code}{language}{time.time()}".encode()).hexdigest()[:10]
+    
+    # Save code to file
+    share_data = {
+        'code': code,
+        'language': language,
+        'input': program_input,
+        'timestamp': datetime.now().isoformat()
+    }
+    
+    with open(f'shared_codes/{code_hash}.json', 'w') as f:
+        json.dump(share_data, f)
+    
+    share_url = url_for('load_shared', code_id=code_hash, _external=True)
+    return jsonify({'success': True, 'url': share_url, 'code_id': code_hash})
+
+
+@app.route("/shared/<code_id>")
+def load_shared(code_id):
+    """Load shared code"""
+    try:
+        with open(f'shared_codes/{code_id}.json', 'r') as f:
+            share_data = json.load(f)
+        
+        return render_template(
+            "index.html",
+            code=share_data['code'],
+            language=share_data['language'],
+            program_input=share_data['input'],
+            result="",
+            output="",
+            exec_time=0,
+            history=session.get('history', []),
+            templates=CODE_TEMPLATES,
+            shared=True
+        )
+    except FileNotFoundError:
+        return "Shared code not found", 404
+
+
+@app.route("/download_code", methods=["POST"])
+def download_code():
+    """Download code as file"""
+    data = request.json
+    code = data.get('code', '')
+    language = data.get('language', 'python')
+    
+    # File extensions mapping
+    extensions = {
+        'python': 'py', 'java': 'java', 'javascript': 'js', 'c': 'c',
+        'cpp': 'cpp', 'csharp': 'cs', 'ruby': 'rb', 'php': 'php',
+        'go': 'go', 'rust': 'rs', 'bash': 'sh', 'perl': 'pl',
+        'r': 'R', 'kotlin': 'kt', 'swift': 'swift', 'scala': 'scala',
+        'lua': 'lua', 'typescript': 'ts', 'dart': 'dart'
+    }
+    
+    ext = extensions.get(language, 'txt')
+    filename = f"code.{ext}"
+    
+    # Create file in memory
+    file_data = io.BytesIO(code.encode('utf-8'))
+    file_data.seek(0)
+    
+    return send_file(
+        file_data,
+        mimetype='text/plain',
+        as_attachment=True,
+        download_name=filename
+    )
+
+
+@app.route("/upload_code", methods=["POST"])
+def upload_code():
+    """Upload code file"""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file provided'})
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'})
+    
+    try:
+        code = file.read().decode('utf-8')
+        return jsonify({'success': True, 'code': code})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route("/format_code", methods=["POST"])
+def format_code():
+    """Format/beautify code"""
+    data = request.json
+    code = data.get('code', '')
+    language = data.get('language', 'python')
+    
+    try:
+        if language == 'python':
+            # Use autopep8 or black if available
+            try:
+                import autopep8
+                formatted = autopep8.fix_code(code)
+                return jsonify({'success': True, 'code': formatted})
+            except ImportError:
+                return jsonify({'success': False, 'error': 'autopep8 not installed'})
+        
+        elif language in ['javascript', 'typescript']:
+            # Basic JS formatting
+            return jsonify({'success': True, 'code': code})
+        
+        else:
+            return jsonify({'success': False, 'error': f'Formatting not supported for {language}'})
+    
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route("/save_snippet", methods=["POST"])
+def save_snippet():
+    """Save code snippet to library"""
+    data = request.json
+    snippet_name = data.get('name', 'Untitled')
+    code = data.get('code', '')
+    language = data.get('language', 'python')
+    
+    if 'snippets' not in session:
+        session['snippets'] = []
+    
+    snippet = {
+        'name': snippet_name,
+        'code': code,
+        'language': language,
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    
+    session['snippets'].insert(0, snippet)
+    session['snippets'] = session['snippets'][:20]  # Keep last 20
+    session.modified = True
+    
+    return jsonify({'success': True})
+
+
+@app.route("/get_snippets", methods=["GET"])
+def get_snippets():
+    """Get saved snippets"""
+    return jsonify({'snippets': session.get('snippets', [])})
+
+
+@app.route("/delete_snippet", methods=["POST"])
+def delete_snippet():
+    """Delete a snippet"""
+    data = request.json
+    index = data.get('index', -1)
+    
+    if 'snippets' in session and 0 <= index < len(session['snippets']):
+        session['snippets'].pop(index)
+        session.modified = True
+        return jsonify({'success': True})
+    
+    return jsonify({'success': False})
+
+
+@app.route("/analyze_code", methods=["POST"])
+def analyze_code():
+    """Analyze code complexity and provide statistics"""
+    data = request.json
+    code = data.get('code', '')
+    language = data.get('language', 'python')
+    
+    stats = {
+        'lines': len(code.split('\n')),
+        'characters': len(code),
+        'words': len(code.split()),
+        'non_empty_lines': len([line for line in code.split('\n') if line.strip()])
+    }
+    
+    # Language-specific analysis
+    if language == 'python':
+        stats['functions'] = code.count('def ')
+        stats['classes'] = code.count('class ')
+        stats['imports'] = code.count('import ')
+    elif language in ['java', 'c', 'cpp', 'csharp']:
+        stats['functions'] = code.count('void ') + code.count('int ') + code.count('public ')
+        stats['classes'] = code.count('class ')
+    
+    return jsonify({'success': True, 'stats': stats})
+
+
+@app.route("/export_project", methods=["POST"])
+def export_project():
+    """Export entire project as ZIP"""
+    data = request.json
+    files = data.get('files', [])
+    
+    # Create ZIP in memory
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for file_data in files:
+            filename = file_data.get('name', 'file.txt')
+            content = file_data.get('content', '')
+            zip_file.writestr(filename, content)
+    
+    zip_buffer.seek(0)
+    
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='project.zip'
+    )
 
 
 if __name__ == "__main__":
