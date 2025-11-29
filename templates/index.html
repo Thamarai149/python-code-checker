@@ -395,7 +395,7 @@
                 <option value="clojure" {% if language == 'clojure' %}selected{% endif %}>Clojure</option>
                 <option value="fsharp" {% if language == 'fsharp' %}selected{% endif %}>F#</option>
                 <option value="vb" {% if language == 'vb' %}selected{% endif %}>Visual Basic</option>
-            </select></option>""
+            </select>
             
             <button type="submit" class="btn-run">Run</button>
             <button type="button" onclick="loadTemplate()" class="btn-secondary">New</button>
@@ -429,21 +429,21 @@
             </div>
             
             <!-- History Sidebar -->
-            <div class="history-sidebar" id="historySidebar"></div>
-            <div class="panel-header">Execution History</div>
-            {% if history %}
-                {% for item in history %}
-                <div class="history-item">
-                    <div class="lang">{{ item.language|upper }} {% if item.success %}✅{% else %}❌{% endif %}</div>
-                    <div class="time">{{ item.timestamp }}</div>
-                    <div class="code-preview">{{ item.code }}</div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div style="padding: 20px; text-align: center; color: #7f8c8d; font-size: 13px;">
-                    No history yet
-                </div>
-            {% endif %}
+            <div class="history-sidebar" id="historySidebar">
+                <div class="panel-header">Execution History</div>
+                {% if history %}
+                    {% for item in history %}
+                    <div class="history-item">
+                        <div class="lang">{{ item.language|upper }} {% if item.success %}✅{% else %}❌{% endif %}</div>
+                        <div class="time">{{ item.timestamp }}</div>
+                        <div class="code-preview">{{ item.code }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="padding: 20px; text-align: center; color: #7f8c8d; font-size: 13px;">
+                        No history yet
+                    </div>
+                {% endif %}
             </div>
         </div>
     </form>
@@ -556,6 +556,9 @@
             const language = document.getElementById('language').value;
             if (templates[language]) {
                 codeEditor.setValue(templates[language]);
+                // Clear output and input
+                document.getElementById('outputArea').textContent = 'Click "Run" to see output here...';
+                document.getElementById('program_input').value = '';
             }
             updateEditorMode();
         }
@@ -565,13 +568,16 @@
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
             codeEditor.setOption('theme', isDark ? 'monokai' : 'eclipse');
-            localStorage.setItem('darkMode', isDark);
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
         }
         
-        // Load dark mode preference
-        if (localStorage.getItem('darkMode') === 'true') {
-            toggleDarkMode();
-        }
+        // Load dark mode preference on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                codeEditor.setOption('theme', 'monokai');
+            }
+        });
         
         // Toggle history sidebar
         function toggleHistory() {
@@ -581,16 +587,22 @@
         // Download output
         function downloadOutput() {
             const output = document.getElementById('outputArea').textContent;
-            if (!output || output === 'Click "Run" to see output here...') {
+            if (!output || output.trim() === '' || output === 'Click "Run" to see output here...') {
                 alert('No output to download!');
                 return;
             }
+            const language = document.getElementById('language').value;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const filename = `output_${language}_${timestamp}.txt`;
+            
             const blob = new Blob([output], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'output.txt';
+            a.download = filename;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
         
@@ -598,7 +610,16 @@
         function clearHistory() {
             if (confirm('Clear all execution history?')) {
                 fetch('/clear_history', { method: 'POST' })
-                    .then(() => location.reload());
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to clear history');
+                    });
             }
         }
         

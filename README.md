@@ -33,25 +33,42 @@ A powerful web-based IDE supporting 35 programming languages with syntax highlig
 
 ## 🚀 Quick Start
 
-### 1. Install Flask
-```bash
-pip install flask
+### Option 1: Use Startup Scripts (Easiest)
+
+**Windows:**
+```cmd
+start.bat
 ```
 
-### 2. Check Language Availability
+**Linux/macOS:**
 ```bash
-python check_languages.py
+chmod +x start.sh
+./start.sh
 ```
 
-### 3. Run the Application
+### Option 2: Manual Start
+
+1. **Install Flask**
+```bash
+pip install -r requirements.txt
+```
+
+2. **Test Your System**
+```bash
+python test_app.py
+```
+
+3. **Run the Application**
 ```bash
 python app.py
 ```
 
-### 4. Open in Browser
+4. **Open in Browser**
 ```
 http://127.0.0.1:5000
 ```
+
+📖 **See [QUICKSTART.md](QUICKSTART.md) for detailed first-time setup guide**
 
 ## 📦 Installation
 
@@ -145,14 +162,20 @@ See how long your code takes to run (displayed in seconds).
 
 ```
 .
-├── app.py                    # Flask application
+├── app.py                    # Flask application (main backend)
 ├── templates/
 │   └── index.html           # Main UI template
 ├── static/
-│   └── style.css            # Additional styles (optional)
-├── check_languages.py       # Language availability checker
+│   ├── style.css            # Additional styles
+│   └── *.png                # Screenshots
+├── test_app.py              # System check script
+├── requirements.txt         # Python dependencies
+├── start.bat                # Windows startup script
+├── start.sh                 # Linux/macOS startup script
+├── QUICKSTART.md            # Quick start guide
 ├── INSTALLATION_GUIDE.md    # Detailed installation guide
-└── README.md               # This file
+├── README.md                # This file
+└── .gitignore               # Git ignore rules
 ```
 
 ## 🔧 Configuration

@@ -136,6 +136,7 @@ End Module"""
 
 def check_and_run_code(language, code, program_input):
     start_time = time.time()
+    TIMEOUT = 30  # 30 seconds timeout for all executions
     
     if language == "java":
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -153,13 +154,17 @@ def check_and_run_code(language, code, program_input):
                 return compile_proc.stderr, None, exec_time
 
             # Run
-            run_proc = subprocess.run(
-                ["java", "-cp", tmpdir, "Main"],
-                input=program_input,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-            )
-            exec_time = time.time() - start_time
-            return "✅ Java code is syntactically correct.", run_proc.stdout if run_proc.stdout else run_proc.stderr, exec_time
+            try:
+                run_proc = subprocess.run(
+                    ["java", "-cp", tmpdir, "Main"],
+                    input=program_input,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=TIMEOUT
+                )
+                exec_time = time.time() - start_time
+                return "✅ Java code is syntactically correct.", run_proc.stdout if run_proc.stdout else run_proc.stderr, exec_time
+            except subprocess.TimeoutExpired:
+                exec_time = time.time() - start_time
+                return "❌ Execution timeout (30 seconds)", None, exec_time
 
     elif language == "python":
         try:
@@ -174,26 +179,40 @@ def check_and_run_code(language, code, program_input):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
             )
             exec_time = time.time() - start_time
+            os.unlink(tmpfile_path)  # Clean up temp file
             return "✅ Python code is syntactically correct.", run_proc.stdout if run_proc.stdout else run_proc.stderr, exec_time
         except SyntaxError as e:
             exec_time = time.time() - start_time
             return str(e), None, exec_time
+        finally:
+            if 'tmpfile_path' in locals() and os.path.exists(tmpfile_path):
+                try:
+                    os.unlink(tmpfile_path)
+                except:
+                    pass
 
     elif language == "javascript":
         with tempfile.NamedTemporaryFile(delete=False, suffix=".js") as tmpfile:
             tmpfile.write(code.encode("utf-8"))
             tmpfile_path = tmpfile.name
 
-        run_proc = subprocess.run(
-            ["node", tmpfile_path],
-            input=program_input,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
-        exec_time = time.time() - start_time
-        if run_proc.returncode == 0:
-            return "✅ JavaScript code is syntactically correct.", run_proc.stdout, exec_time
-        else:
-            return run_proc.stderr, None, exec_time
+        try:
+            run_proc = subprocess.run(
+                ["node", tmpfile_path],
+                input=program_input,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30
+            )
+            exec_time = time.time() - start_time
+            if run_proc.returncode == 0:
+                return "✅ JavaScript code is syntactically correct.", run_proc.stdout, exec_time
+            else:
+                return run_proc.stderr, None, exec_time
+        except subprocess.TimeoutExpired:
+            exec_time = time.time() - start_time
+            return "❌ Execution timeout (30 seconds)", None, exec_time
+        finally:
+            if os.path.exists(tmpfile_path):
+                os.unlink(tmpfile_path)
 
     elif language == "c":
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -673,12 +692,23 @@ def check_and_run_code(language, code, program_input):
             tmpfile.write(code.encode("utf-8"))
             tmpfile_path = tmpfile.name
 
-        run_proc = subprocess.run(
-            ["guile", tmpfile_path],
-            input=program_input,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
+        # Try Guile first, fallback to Racket
+        try:
+            run_proc = subprocess.run(
+                ["guile", tmpfile_path],
+                input=program_input,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+        except FileNotFoundError:
+            # Fallback to Racket if Guile not found
+            run_proc = subprocess.run(
+                ["racket", tmpfile_path],
+                input=program_input,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+        
         exec_time = time.time() - start_time
+        os.unlink(tmpfile_path)  # Clean up temp file
         if run_proc.returncode == 0:
             return "✅ Scheme code executed successfully.", run_proc.stdout, exec_time
         else:
