@@ -7,6 +7,7 @@
     <title>Nexus Studio - Advanced Online IDE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -201,6 +202,8 @@
     <!-- Scripts -->
     <script id="templates-data" type="application/json">{{ templates|tojson|safe }}</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/anyword-hint.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
@@ -215,7 +218,18 @@
             indentUnit: 4,
             lineWrapping: true,
             autoCloseBrackets: true,
-            matchBrackets: true
+            matchBrackets: true,
+            extraKeys: {"Ctrl-Space": "autocomplete"}
+        });
+
+        // Trigger autocomplete on typing
+        codeEditor.on("inputRead", function(editor, change) {
+            if (change.origin !== "paste" && !editor.state.completionActive) {
+                var ch = change.text[0];
+                if (/[a-zA-Z_#]/.test(ch)) { 
+                    CodeMirror.commands.autocomplete(editor, null, {completeSingle: false});
+                }
+            }
         });
 
         // Nexus Custom Dialog System
