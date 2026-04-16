@@ -228,7 +228,7 @@
             justify-content: center;
         }
 
-        .about-modal-content {
+        .about-modal-content, .projects-modal-content {
             background: var(--bg-studio);
             width: 90%;
             max-width: 600px;
@@ -249,11 +249,19 @@
         .modal-close:hover { color: #fff; }
 
         /* Projects List */
+        .projects-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .projects-header h2 { font-family: var(--font-accent); border: none; padding: 0; margin: 0; color: var(--text-main); font-size: 24px; }
+        .projects-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
         .projects-body { background: transparent !important; color: var(--text-main) !important; }
-        .projects-table th { background: rgba(255,255,255,0.02) !important; border-color: var(--glass-border) !important; color: var(--text-dim) !important; }
-        .projects-table td { border-color: var(--glass-border) !important; color: var(--text-main) !important; }
-        .projects-table tr:hover { background: var(--glass-bg) !important; }
+        .projects-table-container { overflow-x: auto; }
+        .projects-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .projects-table th, .projects-table td { padding: 12px 15px; border-bottom: 1px solid var(--glass-border) !important; }
+        .projects-table th { background: rgba(255,255,255,0.02) !important; color: var(--text-dim) !important; font-weight: 600; }
+        .projects-table td { color: var(--text-main) !important; }
+        .projects-table tr:hover td { background: var(--glass-bg); }
+        .action-icons i { cursor: pointer; margin-right: 12px; color: var(--text-dim); transition: var(--transition-fast); }
+        .action-icons i:hover { color: var(--neon-blue); }
 
         .dialog-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
 

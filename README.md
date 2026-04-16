@@ -63,10 +63,6 @@ chmod +x start.sh
 pip install -r requirements.txt
 ```
 
-2. **Test Your System**
-```bash
-python test_app.py
-```
 
 3. **Run the Application**
 ```bash
@@ -75,7 +71,7 @@ python app.py
 
 4. **Open in Browser**
 ```
-http://127.0.0.1:5000
+http://127.0.0.1:2006
 ```
 
 📖 **See [QUICKSTART.md](QUICKSTART.md) for detailed first-time setup guide**
@@ -244,13 +240,13 @@ app.secret_key = 'your-secret-key-here'  # Change for production
 3. See [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md) for installation help
 
 ### Port Already in Use
-Change the port in `app.py` or kill the process using port 5000:
+Change the port in `app.py` or kill the process using port 2006:
 ```bash
 # Linux/macOS
-lsof -ti:5000 | xargs kill -9
+lsof -ti:2006 | xargs kill -9
 
 # Windows
-netstat -ano | findstr :5000
+netstat -ano | findstr :2006
 taskkill /PID <PID> /F
 ```
 

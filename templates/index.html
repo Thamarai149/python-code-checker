@@ -449,12 +449,12 @@
         }
 
         function openProjectsModal() {
-            projectsModal.style.display = 'block';
+            projectsModal.classList.add('active');
             loadProjectsTable();
         }
 
         function closeProjectsModal() {
-            projectsModal.style.display = 'none';
+            projectsModal.classList.remove('active');
         }
 
         function loadProjectsTable() {
