@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,3 +39,1275 @@
     {% endif %}
 </body>
 </html>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Code Compiler</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/eclipse.min.css">
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+        
+        body.dark-mode {
+            background: #1e1e1e;
+        }
+        
+        /* Top Navigation Bar */
+        .navbar {
+            background: #2c3e50;
+            color: white;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            height: 50px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        body.dark-mode .navbar {
+            background: #1a1a1a;
+        }
+        
+        .navbar .logo {
+            font-size: 20px;
+            font-weight: bold;
+            margin-right: 30px;
+            color: #3498db;
+        }
+        
+        .navbar .nav-item {
+            margin-right: 20px;
+            color: #ecf0f1;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        /* Toolbar */
+        .toolbar {
+            background: linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 100%);
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid #dee2e6;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        body.dark-mode .toolbar {
+            background: linear-gradient(to bottom, #2d2d30 0%, #252526 100%);
+            border-bottom: 2px solid #1a1a1a;
+        }
+        
+        .toolbar select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            background: white;
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        body.dark-mode .toolbar select {
+            background: #3c3c3c;
+            border: 1px solid #555;
+            color: #cccccc;
+        }
+        
+        .toolbar button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .toolbar button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .toolbar button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        /* Run Button - Green */
+        .toolbar .btn-run {
+            background: linear-gradient(to bottom, #5cb85c 0%, #4cae4c 100%);
+            color: white;
+            padding: 8px 20px;
+            font-size: 14px;
+        }
+        
+        .toolbar .btn-run:hover {
+            background: linear-gradient(to bottom, #4cae4c 0%, #449d44 100%);
+        }
+        
+        /* Debug Button - Blue */
+        .toolbar .btn-debug {
+            background: linear-gradient(to bottom, #5bc0de 0%, #46b8da 100%);
+            color: white;
+        }
+        
+        .toolbar .btn-debug:hover {
+            background: linear-gradient(to bottom, #46b8da 0%, #31b0d5 100%);
+        }
+        
+        /* Stop Button - Red */
+        .toolbar .btn-stop {
+            background: linear-gradient(to bottom, #d9534f 0%, #d43f3a 100%);
+            color: white;
+        }
+        
+        .toolbar .btn-stop:hover {
+            background: linear-gradient(to bottom, #d43f3a 0%, #c9302c 100%);
+        }
+        
+        /* Share Button - Orange */
+        .toolbar .btn-share {
+            background: linear-gradient(to bottom, #f0ad4e 0%, #ec971f 100%);
+            color: white;
+        }
+        
+        .toolbar .btn-share:hover {
+            background: linear-gradient(to bottom, #ec971f 0%, #d58512 100%);
+        }
+        
+        /* Save Button - Blue */
+        .toolbar .btn-save {
+            background: linear-gradient(to bottom, #337ab7 0%, #2e6da4 100%);
+            color: white;
+        }
+        
+        .toolbar .btn-save:hover {
+            background: linear-gradient(to bottom, #2e6da4 0%, #286090 100%);
+        }
+        
+        /* Beautify Button - Cyan */
+        .toolbar .btn-beautify {
+            background: linear-gradient(to bottom, #5bc0de 0%, #46b8da 100%);
+            color: white;
+        }
+        
+        .toolbar .btn-beautify:hover {
+            background: linear-gradient(to bottom, #46b8da 0%, #31b0d5 100%);
+        }
+        
+        /* Download Button - Cyan */
+        .toolbar .btn-download {
+            background: linear-gradient(to bottom, #5bc0de 0%, #46b8da 100%);
+            color: white;
+            padding: 8px 12px;
+        }
+        
+        .toolbar .btn-download:hover {
+            background: linear-gradient(to bottom, #46b8da 0%, #31b0d5 100%);
+        }
+        
+        /* Secondary Buttons - Gray */
+        .toolbar .btn-secondary {
+            background: linear-gradient(to bottom, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+        }
+        
+        .toolbar .btn-secondary:hover {
+            background: linear-gradient(to bottom, #7f8c8d 0%, #6c7a7b 100%);
+        }
+        
+        /* Theme Button */
+        .dark-mode-btn {
+            background: linear-gradient(to bottom, #f39c12 0%, #e67e22 100%) !important;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .dark-mode-btn:hover {
+            background: linear-gradient(to bottom, #e67e22 0%, #d35400 100%) !important;
+        }
+        
+        /* Button Icons */
+        .btn-icon {
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        /* Panel Header Buttons */
+        .panel-header button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        
+        .panel-header button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+        }
+        
+        .panel-header button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+        
+        /* Save Button - Blue */
+        .panel-btn-save {
+            background: linear-gradient(to bottom, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+        
+        .panel-btn-save:hover {
+            background: linear-gradient(to bottom, #2980b9 0%, #21618c 100%);
+        }
+        
+        /* Download All Button - Cyan */
+        .panel-btn-download {
+            background: linear-gradient(to bottom, #5bc0de 0%, #46b8da 100%);
+            color: white;
+        }
+        
+        .panel-btn-download:hover {
+            background: linear-gradient(to bottom, #46b8da 0%, #31b0d5 100%);
+        }
+        
+        /* Clear Button - Red */
+        .panel-btn-clear {
+            background: linear-gradient(to bottom, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+        
+        .panel-btn-clear:hover {
+            background: linear-gradient(to bottom, #c0392b 0%, #a93226 100%);
+        }
+        
+        /* Main Container */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 110px);
+            background: #ecf0f1;
+        }
+        
+        body.dark-mode .main-container {
+            background: #1e1e1e;
+        }
+        
+        /* Left Panel - Editor */
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-right: 1px solid #bdc3c7;
+        }
+        
+        body.dark-mode .editor-panel {
+            background: #1e1e1e;
+            border-right: 1px solid #3e3e42;
+        }
+        
+        .panel-header {
+            background: #ecf0f1;
+            padding: 10px 15px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #2c3e50;
+            border-bottom: 1px solid #bdc3c7;
+        }
+        
+        body.dark-mode .panel-header {
+            background: #252526;
+            color: #cccccc;
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .editor-wrapper {
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .CodeMirror {
+            height: 100%;
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        
+        /* Right Panel - Input/Output */
+        .io-panel {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        body.dark-mode .io-panel {
+            background: #1e1e1e;
+        }
+        
+        .input-section,
+        .output-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid #bdc3c7;
+        }
+        
+        body.dark-mode .input-section,
+        body.dark-mode .output-section {
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .input-section {
+            max-height: 30%;
+        }
+        
+        .output-section {
+            flex: 2;
+        }
+        
+        .input-area,
+        .output-area {
+            flex: 1;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            border: none;
+            resize: none;
+            background: #fafafa;
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+        
+        .input-area::placeholder {
+            color: #95a5a6;
+            font-style: italic;
+        }
+        
+        body.dark-mode .input-area,
+        body.dark-mode .output-area {
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+     
+        body.dark-mode .input-area::placeholder {
+            color: #666;
+        }
+        
+        .output-area {
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        /* Command line arguments section */
+        .cmd-args-section {
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+        }
+        
+        body.dark-mode .cmd-args-section {
+            background: #2d2d30;
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .cmd-args-section label {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        body.dark-mode .cmd-args-section label {
+            color: #cccccc;
+        }
+        
+        .cmd-args-section input {
+            flex: 1;
+            padding: 4px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+        }
+        
+        body.dark-mode .cmd-args-section input {
+            background: #3c3c3c;
+            border: 1px solid #555;
+            color: #cccccc;
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 5px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            height: 30px;
+        }
+        
+        body.dark-mode .status-bar {
+            background: #007acc;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .status-success {
+            color: #2ecc71;
+        }
+        
+        .status-error {
+            color: #e74c3c;
+        }
+        
+        /* History Sidebar */
+        .history-sidebar {
+            width: 300px;
+            background: #ecf0f1;
+            border-left: 1px solid #bdc3c7;
+            overflow-y: auto;
+            display: none;
+            max-height: calc(100vh - 110px);
+        }
+        
+        body.dark-mode .history-sidebar {
+            background: #252526;
+            border-left: 1px solid #3e3e42;
+        }
+        
+        .history-sidebar.show {
+            display: block;
+        }
+        
+        #snippetsSidebar {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            z-index: 100;
+        }
+        
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid #bdc3c7;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        body.dark-mode .history-item {
+            border-bottom: 1px solid #3e3e42;
+        }
+        
+        .history-item:hover {
+            background: #d5dbdb;
+        }
+        
+        body.dark-mode .history-item:hover {
+            background: #2a2d2e;
+        }
+        
+        .history-item .lang {
+            font-weight: 600;
+            color: #3498db;
+            font-size: 12px;
+        }
+        
+        .history-item .time {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+        
+        .history-item .code-preview {
+            font-size: 11px;
+            color: #555;
+            margin-top: 5px;
+            font-family: monospace;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        body.dark-mode .history-item .code-preview {
+            color: #999;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .io-panel {
+                width: 100%;
+                height: 40%;
+            }
+            
+            .history-sidebar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <div class="navbar">
+        <div class="logo">⚡ OnlineIDE</div>
+        <a href="#" class="nav-item">Compiler</a>
+        <a href="#" class="nav-item">IDE</a>
+        <a href="#" class="nav-item">About</a>
+    </div>
+    
+    <!-- Toolbar -->
+    <form method="post" id="codeForm">
+        <div class="toolbar">
+            <select name="language" id="language" onchange="updateEditorMode()">
+                <option value="java" {% if language == 'java' %}selected{% endif %}>Java</option>
+                <option value="python" {% if language == 'python' %}selected{% endif %}>Python</option>
+                <option value="javascript" {% if language == 'javascript' %}selected{% endif %}>JavaScript (Node.js)</option>
+                <option value="c" {% if language == 'c' %}selected{% endif %}>C (GCC)</option>
+                <option value="cpp" {% if language == 'cpp' %}selected{% endif %}>C++ (G++)</option>
+                <option value="csharp" {% if language == 'csharp' %}selected{% endif %}>C# (Mono)</option>
+                <option value="ruby" {% if language == 'ruby' %}selected{% endif %}>Ruby</option>
+                <option value="php" {% if language == 'php' %}selected{% endif %}>PHP</option>
+                <option value="go" {% if language == 'go' %}selected{% endif %}>Go</option>
+                <option value="rust" {% if language == 'rust' %}selected{% endif %}>Rust</option>
+                <option value="bash" {% if language == 'bash' %}selected{% endif %}>Bash</option>
+                <option value="perl" {% if language == 'perl' %}selected{% endif %}>Perl</option>
+                <option value="r" {% if language == 'r' %}selected{% endif %}>R</option>
+                <option value="kotlin" {% if language == 'kotlin' %}selected{% endif %}>Kotlin</option>
+                <option value="swift" {% if language == 'swift' %}selected{% endif %}>Swift</option>
+                <option value="scala" {% if language == 'scala' %}selected{% endif %}>Scala</option>
+                <option value="lua" {% if language == 'lua' %}selected{% endif %}>Lua</option>
+                <option value="typescript" {% if language == 'typescript' %}selected{% endif %}>TypeScript</option>
+                <option value="dart" {% if language == 'dart' %}selected{% endif %}>Dart</option>
+                <option value="fortran" {% if language == 'fortran' %}selected{% endif %}>Fortran</option>
+                <option value="cobol" {% if language == 'cobol' %}selected{% endif %}>Cobol</option>
+                <option value="pascal" {% if language == 'pascal' %}selected{% endif %}>Pascal</option>
+                <option value="haskell" {% if language == 'haskell' %}selected{% endif %}>Haskell</option>
+                <option value="objectivec" {% if language == 'objectivec' %}selected{% endif %}>Objective-C</option>
+                <option value="assembly" {% if language == 'assembly' %}selected{% endif %}>Assembly (NASM)</option>
+                <option value="prolog" {% if language == 'prolog' %}selected{% endif %}>Prolog</option>
+                <option value="lisp" {% if language == 'lisp' %}selected{% endif %}>Common Lisp</option>
+                <option value="scheme" {% if language == 'scheme' %}selected{% endif %}>Scheme</option>
+                <option value="erlang" {% if language == 'erlang' %}selected{% endif %}>Erlang</option>
+                <option value="elixir" {% if language == 'elixir' %}selected{% endif %}>Elixir</option>
+                <option value="clojure" {% if language == 'clojure' %}selected{% endif %}>Clojure</option>
+                <option value="fsharp" {% if language == 'fsharp' %}selected{% endif %}>F#</option>
+                <option value="vb" {% if language == 'vb' %}selected{% endif %}>Visual Basic</option>
+            </select>
+            
+            <button type="submit" class="btn-run">
+                <span class="btn-icon">▶</span> Run
+            </button>
+            <button type="button" onclick="debugCode()" class="btn-debug">
+                <span class="btn-icon">⚙</span> Debug
+            </button>
+            <button type="button" onclick="stopExecution()" class="btn-stop">
+                <span class="btn-icon">⬛</span> Stop
+            </button>
+            <button type="button" onclick="shareCode()" class="btn-share">
+                <span class="btn-icon">↗</span> Share
+            </button>
+            <button type="button" onclick="downloadCode()" class="btn-save">
+                <span class="btn-icon">💾</span> Save
+            </button>
+            <button type="button" onclick="formatCode()" class="btn-beautify">
+                <span class="btn-icon">{ }</span> Beautify
+            </button>
+            <button type="button" onclick="document.getElementById('fileUpload').click()" class="btn-download">
+                <span class="btn-icon">⬇</span>
+            </button>
+            <button type="button" onclick="loadTemplate()" class="btn-secondary">
+                <span class="btn-icon">📄</span> New
+            </button>
+            <button type="button" onclick="toggleSnippets()" class="btn-secondary">
+                <span class="btn-icon">📚</span> Snippets
+            </button>
+            <button type="button" onclick="analyzeCode()" class="btn-secondary">
+                <span class="btn-icon">📊</span> Analyze
+            </button>
+            <button type="button" onclick="toggleHistory()" class="btn-secondary">
+                <span class="btn-icon">🕒</span> History
+            </button>
+            <button type="button" onclick="toggleDarkMode()" class="dark-mode-btn">
+                <span class="btn-icon">🌙</span> Theme
+            </button>
+            <input type="file" id="fileUpload" style="display: none;" onchange="uploadFile(this)" accept=".py,.java,.js,.c,.cpp,.cs,.rb,.php,.go,.rs,.sh,.pl,.R,.kt,.swift,.scala,.lua,.ts,.dart">
+        </div>
+    
+        <!-- Main Container -->
+        <div class="main-container">
+            <!-- Editor Panel -->
+            <div class="editor-panel">
+                <div class="panel-header">Source Code</div>
+                <div class="editor-wrapper">
+                    <textarea name="code" id="code">{{ code }}</textarea>
+                </div>
+            </div>
+            
+            <!-- Input/Output Panel -->
+            <div class="io-panel">
+                <!-- Command Line Arguments -->
+                <div class="cmd-args-section">
+                    <label>Command line arguments:</label>
+                    <input type="text" id="cmdArgs" placeholder="Enter command line arguments here..." />
+                </div>
+                
+                <div class="input-section">
+                    <div class="panel-header">
+                        Standard Input (stdin)
+                        <div style="float: right; display: flex; gap: 8px;">
+                            <button type="button" onclick="clearInput()" class="panel-btn-clear">Clear</button>
+                        </div>
+                    </div>
+                    <textarea name="program_input" id="program_input" class="input-area" placeholder="Enter input here (one value per line)...">{{ program_input }}</textarea>
+                </div>
+            
+                <div class="output-section">
+                    <div class="panel-header">
+                        Output
+                        <div style="float: right; display: flex; gap: 8px;">
+                            <button type="button" onclick="downloadOutput()" class="panel-btn-save">
+                                <span>💾</span> Save
+                            </button>
+                            <button type="button" onclick="downloadAllFiles()" class="panel-btn-download">
+                                <span>⬇</span> Download all files
+                            </button>
+                            <button type="button" onclick="clearOutput()" class="panel-btn-cleaton>
+                        </div>
+                    </div>
+                    <div class="output-area" id="outputArea">{{ output if output else 'Click "Run" to see output here...' }}</div>
+                </d
+            </div>
+            
+            <!-- History Sidebar -->
+            <div class="history-sidebar" id="historySidebar">
+                <div class="panel-header">Execution History</div>
+                {% if history %}
+                    {% for item in history %}
+                    <div class="history-item">
+                        <div class="lang">{{ item.language|upper }} {% if item.success %}✅{% else %}❌{% endif %}</div>
+                        <div class="time">{{ item.timestamp }}</div>
+                        <div class="code-preview">{{ item.code }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="padding: 20px; text-align: center; color: #7f8c8d; font-size: 13px;">
+                        No history yet
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Snippets Sidebar -->
+            <div class="history-sidebar" id="snippetsSidebar">
+                <div class="panel-header">
+                    Code Snippets
+                    <button onclick="saveSnippet()" style="float: right; padding: 2px 8px; font-size: 11px;">💾 Save Current</button>
+                </div>
+                <div id="snippetsList">
+                    <div style="padding: 20px; text-align: center; color: #7f8c8d; font-size: 13px;">
+                        No snippets saved yet
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            {% if result %}
+                <span class="{% if '✅' in result %}status-success{% else %}status-error{% endif %}">
+                    {{ result }}
+                </span>
+                {% if exec_time %}
+                <span>⏱️ {{ "%.3f"|format(exec_time) }}s</span>
+                {% endif %}
+            {% else %}
+                <span>Ready</span>
+            {% endif %}
+        </div>
+        <div class="status-item">
+            <span id="languageStatus">{{ language|upper }}</span>
+        </div>
+    </div>
+    
+    <script id="templates-data" type="application/json">{{ templates|tojson|safe }}</script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/ruby/ruby.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/php/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/go/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/rust/rust.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/shell/shell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/perl/perl.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/r/r.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/swift/swift.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/lua/lua.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/fortran/fortran.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/cobol/cobol.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/pascal/pascal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/haskell/haskell.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/commonlisp/commonlisp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/scheme/scheme.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/erlang/erlang.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clojure/clojure.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/mllike/mllike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/vb/vb.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/gas/gas.min.js"></script>
+    
+    <script>
+        const templates = JSON.parse(document.getElementById('templates-data').textContent);
+        
+        // Initialize CodeMirror
+        const codeEditor = CodeMirror.fromTextArea(document.getElementById('code'), {
+            lineNumbers: true,
+            mode: 'text/x-java',
+            theme: 'eclipse',
+            indentUnit: 4,
+            lineWrapping: true,
+            tabSize: 4,
+            indentWithTabs: false,
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            extraKeys: {
+                "Ctrl-Space": "autocomplete",
+                "Tab": function(cm) {
+                    if (cm.somethingSelected()) {
+                        cm.indentSelection("add");
+                    } else {
+                        cm.replaceSelection("    ", "end");
+                    }
+                }
+            }
+        });
+        
+        //Update mode based on language
+        function updateEditorMode() {
+            const language = document.getElementById('language').value;
+            const modes = {
+                'java': 'text/x-java',
+                'python': 'text/x-python',
+                'javascript': 'text/javascript',
+                'c': 'text/x-csrc',
+                'cpp': 'text/x-c++src',
+                'csharp': 'text/x-csharp',
+                'ruby': 'text/x-ruby',
+                'php': 'application/x-httpd-php',
+                'go': 'text/x-go',
+                'rust': 'text/x-rustsrc',
+                'bash': 'text/x-sh',
+                'perl': 'text/x-perl',
+                'r': 'text/x-rsrc',
+                'kotlin': 'text/x-kotlin',
+                'swift': 'text/x-swift',
+                'scala': 'text/x-scala',
+                'lua': 'text/x-lua',
+                'typescript': 'application/typescript',
+                'dart': 'application/dart',
+                'fortran': 'text/x-fortran',
+                'cobol': 'text/x-cobol',
+                'pascal': 'text/x-pascal',
+                'haskell': 'text/x-haskell',
+                'objectivec': 'text/x-objectivec',
+                'assembly': 'text/x-nasm',
+                'prolog': 'text/x-prolog',
+                'lisp': 'text/x-common-lisp',
+                'scheme': 'text/x-scheme',
+                'erlang': 'text/x-erlang',
+                'elixir': 'text/x-elixir',
+                'clojure': 'text/x-clojure',
+                'fsharp': 'text/x-fsharp',
+                'vb': 'text/x-vb'
+            };
+            codeEditor.setOption('mode', modes[language] || 'text/plain');
+            document.getElementById('languageStatus').textContent = language.toUpperCase();
+        }
+        
+        // Load template
+        function loadTemplate() {
+            const language = document.getElementById('language').value;
+            if (templates[language]) {
+                codeEditor.setValue(templates[language]);
+                // Clear output and input
+                document.getElementById('outputArea').textContent = 'Click "Run" to see output here...';
+                document.getElementById('program_input').value = '';
+            }
+            updateEditorMode();
+        }
+        
+        // Dark mode toggle
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            codeEditor.setOption('theme', isDark ? 'monokai' : 'eclipse');
+            localStorage.setItem('darkMode', isDark ? 'true' : 'false');
+        }
+        
+        // Load dark mode preference on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                codeEditor.setOption('theme', 'monokai');
+            }
+        });
+        
+        // Toggle history sidebar
+        function toggleHistory() {
+            document.getElementById('historySidebar').classList.toggle('show');
+        }
+        
+        // Download output
+        function downloadOutput() {
+            const output = document.getElementById('outputArea').textContent;
+            if (!output || output.trim() === '' || output === 'Click "Run" to see output here...') {
+                alert('No output to download!');
+                return;
+            }
+            const language = document.getElementById('language').value;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            const filename = `output_${language}_${timestamp}.txt`;
+            
+            const blob = new Blob([output], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Download all files (code + output)
+        function downloadAllFiles() {
+            const code = codeEditor.getValue();
+            const output = document.getElementById('outputArea').textContent;
+            const input = document.getElementById('program_input').value;
+            const language = document.getElementById('language').value;
+            
+            if (!code.trim() && !output.trim()) {
+                alert('No files to download!');
+                return;
+            }
+            
+            // Create files array
+            const files = [];
+            
+            // Add code file
+            if (code.trim()) {
+                const extensions = {
+                    'python': 'py', 'java': 'java', 'javascript': 'js', 'c': 'c',
+                    'cpp': 'cpp', 'csharp': 'cs', 'ruby': 'rb', 'php': 'php',
+                    'go': 'go', 'rust': 'rs', 'bash': 'sh', 'perl': 'pl',
+                    'r': 'R', 'kotlin': 'kt', 'swift': 'swift', 'scala': 'scala',
+                    'lua': 'lua', 'typescript': 'ts', 'dart': 'dart'
+                };
+                const ext = extensions[language] || 'txt';
+                files.push({ name: `code.${ext}`, content: code });
+            }
+            
+            // Add input file if exists
+            if (input.trim()) {
+                files.push({ name: 'input.txt', content: input });
+            }
+            
+            // Add output file if exists
+            if (output.trim() && output !== 'Click "Run" to see output here...') {
+                files.push({ name: 'output.txt', content: output });
+            }
+            
+            // Export as ZIP
+            fetch('/export_project', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ files })
+            })
+            .then(res => res.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `project_${language}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to download files');
+            });
+        }
+        
+        // Clear input
+        function clearInput() {
+            document.getElementById('program_input').value = '';
+        }
+        
+        // Clear output
+        function clearOutput() {
+            document.getElementById('outputArea').textContent = 'Click "Run" to see output here...';
+        }
+        
+        // Clear history
+        function clearHistory() {
+            if (confirm('Clear all execution history?')) {
+                fetch('/clear_history', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to clear history');
+                    });
+            }
+        }
+        
+        
+        function shareCode() {
+            const code = codeEditor.getValue();
+            const language = document.getElementById('language').value;
+            const input = document.getElementById('program_input').value;
+            
+            if (!code.trim()) {
+                alert('No code to share!');
+                return;
+            }
+            
+            fetch('/share', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, language, input })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const shareUrl = data.url;
+                    // Copy to clipboard
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        alert('Share link copied to clipboard!\n\n' + shareUrl);
+                    }).catch(() => {
+                        prompt('Share this link:', shareUrl);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to generate share link');
+            });
+        }
+        
+        // Download code
+        function downloadCode() {
+            const code = codeEditor.getValue();
+            const language = document.getElementById('language').value;
+            
+            if (!code.trim()) {
+                alert('No code to download!');
+                return;
+            }
+            
+            const extensions = {
+                'python': 'py', 'java': 'java', 'javascript': 'js', 'c': 'c',
+                'cpp': 'cpp', 'csharp': 'cs', 'ruby': 'rb', 'php': 'php',
+                'go': 'go', 'rust': 'rs', 'bash': 'sh', 'perl': 'pl',
+                'r': 'R', 'kotlin': 'kt', 'swift': 'swift', 'scala': 'scala',
+                'lua': 'lua', 'typescript': 'ts', 'dart': 'dart'
+            };
+            
+            const ext = extensions[language] || 'txt';
+            const filename = `code.${ext}`;
+            
+            const blob = new Blob([code], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Upload file
+        function uploadFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch('/upload_code', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    codeEditor.setValue(data.code);
+                    alert('File uploaded successfully!');
+                } else {
+                    alert('Upload failed: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to upload file');
+            });
+            
+            // Reset input
+            input.value = '';
+        }
+        
+        // Toggle snippets sidebar
+        function toggleSnippets() {
+            const sidebar = document.getElementById('snippetsSidebar');
+            const historySidebar = document.getElementById('historySidebar');
+            
+            // Close history if open
+            historySidebar.classList.remove('show');
+            
+            // Toggle snippets
+            sidebar.classList.toggle('show');
+            
+            if (sidebar.classList.contains('show')) {
+                loadSnippets();
+            }
+        }
+        
+        // Load snippets
+        function loadSnippets() {
+            fetch('/get_snippets')
+                .then(response => response.json())
+                .then(data => {
+                    const snippetsList = document.getElementById('snippetsList');
+                    
+                    if (data.snippets && data.snippets.length > 0) {
+                        snippetsList.innerHTML = data.snippets.map((snippet, index) => 
+                            '<div class="history-item" style="cursor: pointer;">' +
+                                '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                                    '<div onclick="loadSnippet(' + index + ')" style="flex: 1;">' +
+                                        '<div class="lang">' + snippet.name + '</div>' +
+                                        '<div class="time">' + snippet.language.toUpperCase() + ' - ' + snippet.timestamp + '</div>' +
+                                        '<div class="code-preview">' + snippet.code.substring(0, 50) + '...</div>' +
+                                    '</div>' +
+                                    '<button onclick="deleteSnippet(' + index + '); event.stopPropagation();" ' +
+                                            'style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 11px;">' +
+                                        '🗑️' +
+                                    '</button>' +
+                                '</div>' +
+                            '</div>'
+                        ).join('');
+                    } else {
+                        snippetsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #7f8c8d; font-size: 13px;">No snippets saved yet</div>';
+                    }
+                })
+                .catch(error => console.error('Error loading snippets:', error));
+        }
+        
+        // Save snippet
+        function saveSnippet() {
+            const name = prompt('Enter snippet name:');
+            if (!name) return;
+            
+            const code = codeEditor.getValue();
+            const language = document.getElementById('language').value;
+            
+            fetch('/save_snippet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, code, language })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Snippet saved successfully!');
+                    loadSnippets();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to save snippet');
+            });
+        }
+        
+        // Load snippet
+        function loadSnippet(index) {
+            fetch('/get_snippets')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.snippets && data.snippets[index]) {
+                        const snippet = data.snippets[index];
+                        codeEditor.setValue(snippet.code);
+                        document.getElementById('language').value = snippet.language;
+                        updateEditorMode();
+                        alert('Snippet loaded: ' + snippet.name);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        
+        // Delete snippet
+        function deleteSnippet(index) {
+            if (!confirm('Delete this snippet?')) return;
+            
+            fetch('/delete_snippet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ index })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadSnippets();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        
+        // Analyze code
+        function analyzeCode() {
+            const code = codeEditor.getValue();
+            const language = document.getElementById('language').value;
+            
+            if (!code.trim()) {
+                alert('No code to analyze!');
+                return;
+            }
+            
+            fetch('/analyze_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, language })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const stats = data.stats;
+                    let message = '📊 Code Analysis:\n\n';
+                    message += `Total Lines: ${stats.lines}\n`;
+                    message += `Non-empty Lines: ${stats.non_empty_lines}\n`;
+                    message += `Characters: ${stats.characters}\n`;
+                    message += `Words: ${stats.words}\n`;
+                    
+                    if (stats.functions !== undefined) {
+                        message += `Functions: ${stats.functions}\n`;
+                    }
+                    if (stats.classes !== undefined) {
+                        message += `Classes: ${stats.classes}\n`;
+                    }
+                    if (stats.imports !== undefined) {
+                        message += `Imports: ${stats.imports}\n`;
+                    }
+                    
+                    alert(message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to analyze code');
+            });
+        }
+        
+        // Debug code (placeholder)
+        function debugCode() {
+            alert('Debug feature coming soon!\n\nThis will include:\n- Breakpoints\n- Step execution\n- Variable inspection\n- Memory view');
+        }
+        
+        // Stop execution (placeholder)
+        function stopExecution() {
+            alert('Stop execution feature coming soon!');
+        }
+        
+        // Format code
+        function formatCode() {
+            const code = codeEditor.getValue();
+            const language = document.getElementById('language').value;
+            
+            if (!code.trim()) {
+                alert('No code to format!');
+                return;
+            }
+            
+            fetch('/format_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, language })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    codeEditor.setValue(data.code);
+                    alert('Code formatted successfully!');
+                } else {
+                    alert('Format failed: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to format code');
+            });
+        }
+        
+        // Sync CodeMirror with form submission
+        document.getElementById('codeForm').addEventListener('submit', function() {
+            document.getElementById('code').value = codeEditor.getValue();
+        });
+        
+        // Initialize editor mode
+        updateEditorMode();
+        
+        // Auto-resize editor
+        window.addEventListener('resize', function() {
+            codeEditor.refresh();
+        });
+    </script>
+</body>
+</html>
+>>>>>>> 184bbd93aba82672695388ef40eb69e49a72a1a4
