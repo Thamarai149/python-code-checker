@@ -6,6 +6,7 @@ import json
 import hashlib
 import io
 import zipfile
+import uuid
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -149,6 +150,12 @@ def check_and_run_code(language, code, program_input):
     start_time = time.time()
     TIMEOUT = 30  # 30 seconds timeout for all executions
     
+    # Toolchain configuration (Force 64-bit MinGW-w64)
+    env = os.environ.copy()
+    mingw64_path = r"C:\ProgramData\mingw64\mingw64\bin"
+    env["PATH"] = mingw64_path + ";" + env["PATH"]
+    gcc_path = os.path.join(mingw64_path, "gcc.exe")
+    gpp_path = os.path.join(mingw64_path, "g++.exe")
     if language == "java":
         with tempfile.TemporaryDirectory() as tmpdir:
             java_file = os.path.join(tmpdir, "Main.java")
@@ -232,21 +239,30 @@ def check_and_run_code(language, code, program_input):
             with open(c_file, "w") as f:
                 f.write(code)
 
+            # Compile
             compile_proc = subprocess.run(
-                ["gcc", c_file, "-o", exe_file],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+                [gcc_path, c_file, "-o", exe_file],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
             )
             if compile_proc.returncode != 0:
                 exec_time = time.time() - start_time
-                return compile_proc.stderr, None, exec_time
+                return "❌ Compilation Error:\n" + compile_proc.stderr, None, exec_time
 
-            run_proc = subprocess.run(
-                [exe_file],
-                input=program_input,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-            )
-            exec_time = time.time() - start_time
-            return "✅ C code is syntactically correct.", run_proc.stdout if run_proc.stdout else run_proc.stderr, exec_time
+            # Run
+            try:
+                run_proc = subprocess.run(
+                    [exe_file],
+                    input=program_input,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=TIMEOUT, env=env
+                )
+                exec_time = time.time() - start_time
+                return "✅ C code is syntactically correct.", run_proc.stdout if run_proc.stdout else run_proc.stderr, exec_time
+            except subprocess.TimeoutExpired:
+                exec_time = time.time() - start_time
+                return "❌ Execution timeout (30 seconds)", None, exec_time
+            except Exception as e:
+                exec_time = time.time() - start_time
+                return "❌ Execution Error: " + str(e), None, exec_time
 
     elif language == "cpp":
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -255,21 +271,30 @@ def check_and_run_code(language, code, program_input):
             with open(cpp_file, "w") as f:
                 f.write(code)
 
+            # Compile
             compile_proc = subprocess.run(
-                ["g++", cpp_file, "-o", exe_file],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+                [gpp_path, cpp_file, "-o", exe_file],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
             )
             if compile_proc.returncode != 0:
                 exec_time = time.time() - start_time
-                return compile_proc.stderr, None, exec_time
+                return "❌ Compilation Error:\n" + compile_proc.stderr, None, exec_time
 
-            run_proc = subprocess.run(
-                [exe_file],
-                input=program_input,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-            )
-            exec_time = time.time() - start_time
-            return "✅ C++ code is syntactically correct.", run_proc.stdout if run_proc.stdout else run_proc.stderr, exec_time
+            # Run
+            try:
+                run_proc = subprocess.run(
+                    [exe_file],
+                    input=program_input,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=TIMEOUT, env=env
+                )
+                exec_time = time.time() - start_time
+                return "✅ C++ code is syntactically correct.", run_proc.stdout if run_proc.stdout else run_proc.stderr, exec_time
+            except subprocess.TimeoutExpired:
+                exec_time = time.time() - start_time
+                return "❌ Execution timeout (30 seconds)", None, exec_time
+            except Exception as e:
+                exec_time = time.time() - start_time
+                return "❌ Execution Error: " + str(e), None, exec_time
 
     elif language == "csharp":
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -280,7 +305,7 @@ def check_and_run_code(language, code, program_input):
 
             compile_proc = subprocess.run(
                 ["csc", "/out:" + exe_file, cs_file],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
             )
             if compile_proc.returncode != 0:
                 exec_time = time.time() - start_time
@@ -289,7 +314,7 @@ def check_and_run_code(language, code, program_input):
             run_proc = subprocess.run(
                 [exe_file],
                 input=program_input,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env
             )
             exec_time = time.time() - start_time
             return "✅ C# code is syntactically correct.", run_proc.stdout if run_proc.stdout else run_proc.stderr, exec_time
@@ -834,7 +859,9 @@ def index():
         language = request.form["language"]
         code = request.form["code"]
         program_input = request.form["program_input"]
-        result, output, exec_time = check_and_run_code(language, code, program_input)
+        result, output_text, exec_time = check_and_run_code(language, code, program_input)
+        
+        final_output = output_text if output_text else result
         
         # Save to history
         history_entry = {
@@ -846,7 +873,10 @@ def index():
         session['history'].insert(0, history_entry)
         session['history'] = session['history'][:10]  # Keep last 10
         session.modified = True
-    
+        
+        if request.form.get('ajax') == 'true':
+            return jsonify({'output': final_output, 'result': result})
+
     return render_template(
         "index.html",
         result=result,
@@ -865,53 +895,7 @@ def clear_history():
     return jsonify({'success': True})
 
 
-@app.route("/share", methods=["POST"])
-def share_code():
-    """Generate shareable link for code"""
-    data = request.json
-    code = data.get('code', '')
-    language = data.get('language', 'python')
-    program_input = data.get('input', '')
-    
-    # Generate unique hash for the code
-    code_hash = hashlib.md5(f"{code}{language}{time.time()}".encode()).hexdigest()[:10]
-    
-    # Save code to file
-    share_data = {
-        'code': code,
-        'language': language,
-        'input': program_input,
-        'timestamp': datetime.now().isoformat()
-    }
-    
-    with open(f'shared_codes/{code_hash}.json', 'w') as f:
-        json.dump(share_data, f)
-    
-    share_url = url_for('load_shared', code_id=code_hash, _external=True)
-    return jsonify({'success': True, 'url': share_url, 'code_id': code_hash})
 
-
-@app.route("/shared/<code_id>")
-def load_shared(code_id):
-    """Load shared code"""
-    try:
-        with open(f'shared_codes/{code_id}.json', 'r') as f:
-            share_data = json.load(f)
-        
-        return render_template(
-            "index.html",
-            code=share_data['code'],
-            language=share_data['language'],
-            program_input=share_data['input'],
-            result="",
-            output="",
-            exec_time=0,
-            history=session.get('history', []),
-            templates=CODE_TEMPLATES,
-            shared=True
-        )
-    except FileNotFoundError:
-        return "Shared code not found", 404
 
 
 @app.route("/download_code", methods=["POST"])
@@ -962,57 +946,38 @@ def upload_code():
         return jsonify({'success': False, 'error': str(e)})
 
 
-@app.route("/format_code", methods=["POST"])
-def format_code():
-    """Format/beautify code"""
-    data = request.json
-    code = data.get('code', '')
-    language = data.get('language', 'python')
-    
-    try:
-        if language == 'python':
-            # Use autopep8 or black if available
-            try:
-                import autopep8
-                formatted = autopep8.fix_code(code)
-                return jsonify({'success': True, 'code': formatted})
-            except ImportError:
-                return jsonify({'success': False, 'error': 'autopep8 not installed'})
-        
-        elif language in ['javascript', 'typescript']:
-            # Basic JS formatting
-            return jsonify({'success': True, 'code': code})
-        
-        else:
-            return jsonify({'success': False, 'error': f'Formatting not supported for {language}'})
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+
 
 
 @app.route("/save_snippet", methods=["POST"])
 def save_snippet():
-    """Save code snippet to library"""
+    """Save code snippet to library with unique ID"""
     data = request.json
     snippet_name = data.get('name', 'Untitled')
     code = data.get('code', '')
     language = data.get('language', 'python')
+    folder = data.get('folder', 'root')
     
     if 'snippets' not in session:
         session['snippets'] = []
     
+    snippet_id = str(uuid.uuid4())[:8]
     snippet = {
+        'id': snippet_id,
         'name': snippet_name,
         'code': code,
         'language': language,
+        'folder': folder,
+        'is_deleted': False,
         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     
     session['snippets'].insert(0, snippet)
-    session['snippets'] = session['snippets'][:20]  # Keep last 20
+    if len(session['snippets']) > 100:
+        session['snippets'] = session['snippets'][:100]
     session.modified = True
     
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'id': snippet_id})
 
 
 @app.route("/get_snippets", methods=["GET"])
@@ -1023,12 +988,60 @@ def get_snippets():
 
 @app.route("/delete_snippet", methods=["POST"])
 def delete_snippet():
-    """Delete a snippet"""
+    """Soft delete a snippet by ID"""
     data = request.json
-    index = data.get('index', -1)
+    sid = data.get('id')
     
-    if 'snippets' in session and 0 <= index < len(session['snippets']):
-        session['snippets'].pop(index)
+    if 'snippets' in session:
+        for s in session['snippets']:
+            if s.get('id') == sid:
+                s['is_deleted'] = True
+                session.modified = True
+                return jsonify({'success': True})
+    
+    return jsonify({'success': False, 'error': 'Project not found'})
+
+
+@app.route("/restore_snippet", methods=["POST"])
+def restore_snippet():
+    """Restore snippet from bin by ID"""
+    data = request.json
+    sid = data.get('id')
+    
+    if 'snippets' in session:
+        for s in session['snippets']:
+            if s.get('id') == sid:
+                s['is_deleted'] = False
+                session.modified = True
+                return jsonify({'success': True})
+    
+    return jsonify({'success': False})
+
+
+@app.route("/permanent_delete", methods=["POST"])
+def permanent_delete():
+    """Permanently delete snippet by ID"""
+    data = request.json
+    sid = data.get('id')
+    
+    if 'snippets' in session:
+        session['snippets'] = [s for s in session['snippets'] if s.get('id') != sid]
+        session.modified = True
+        return jsonify({'success': True})
+    
+    return jsonify({'success': False})
+
+
+@app.route("/batch_update_folder", methods=["POST"])
+def batch_update_folder():
+    """Move all active snippets to a specific folder"""
+    data = request.json
+    folder_name = data.get('folder', 'root')
+    
+    if 'snippets' in session:
+        for s in session['snippets']:
+            if not s.get('is_deleted', False):
+                s['folder'] = folder_name
         session.modified = True
         return jsonify({'success': True})
     
@@ -1083,6 +1096,86 @@ def export_project():
         mimetype='application/zip',
         as_attachment=True,
         download_name='project.zip'
+    )
+
+
+@app.route("/format_code", methods=["POST"])
+def format_code():
+    """Simple code beautifier/indenter"""
+    data = request.json
+    code = data.get('code', '')
+    language = data.get('language', 'python')
+    
+    if not code:
+        return jsonify({'success': False, 'error': 'No code provided'})
+        
+    lines = code.split('\n')
+    formatted_lines = []
+    indent_level = 0
+    indent_size = 4
+    
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            formatted_lines.append('')
+            continue
+            
+        # Decrease indent if line starts with closing brace
+        if stripped.startswith('}') or stripped.startswith(']') or stripped.startswith(')'):
+            indent_level = max(0, indent_level - 1)
+            
+        formatted_lines.append(' ' * (indent_level * indent_size) + stripped)
+        
+        # Increase indent if line ends with opening brace or colon (Python/C)
+        if stripped.endswith('{') or stripped.endswith('[') or stripped.endswith('(') or (language == 'python' and stripped.endswith(':')):
+            indent_level += 1
+            
+    return jsonify({'success': True, 'code': '\n'.join(formatted_lines)})
+
+
+@app.route("/share_code", methods=["POST"])
+def share_code():
+    """Share code by saving it to a public folder"""
+    data = request.json
+    code = data.get('code', '')
+    language = data.get('language', 'python')
+    
+    if not code:
+        return jsonify({'success': False, 'error': 'No code provided'})
+        
+    share_id = hashlib.md5(code.encode()).hexdigest()[:10]
+    share_path = os.path.join('shared_codes', f"{share_id}.json")
+    
+    share_data = {
+        'code': code,
+        'language': language,
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    
+    with open(share_path, 'w') as f:
+        json.dump(share_data, f)
+        
+    share_url = url_for('view_shared', share_id=share_id, _external=True)
+    return jsonify({'success': True, 'url': share_url})
+
+
+@app.route("/view_shared/<share_id>")
+def view_shared(share_id):
+    """View shared code page"""
+    share_path = os.path.join('shared_codes', f"{share_id}.json")
+    if not os.path.exists(share_path):
+        return "Shared code not found", 404
+        
+    with open(share_path, 'r') as f:
+        share_data = json.load(f)
+        
+    return render_template(
+        "index.html",
+        code=share_data['code'],
+        language=share_data['language'],
+        output="--- Shared Project ---\nLoaded from shared link.",
+        history=session.get('history', []),
+        templates=CODE_TEMPLATES
     )
 
 
