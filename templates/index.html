@@ -7,7 +7,6 @@
     <title>Nexus Studio - Advanced Online IDE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -148,7 +147,7 @@
                     <option value="cpp" {% if language=='cpp' %}selected{% endif %}>C++</option>
                     <option value="java" {% if language=='java' %}selected{% endif %}>Java</option>
                     <option value="python" {% if language=='python' %}selected{% endif %}>Python</option>
-                    <option value="javascript" {% if language=='javascript' %}selected{% endif %}>NodeJS</option>
+                    <option value="javascript" {% if language=='javascript' %}selected{% endif %}>JavaScript</option>
                     <option value="csharp" {% if language=='csharp' %}selected{% endif %}>C#</option>
                 </select>
 
@@ -187,12 +186,12 @@
                     </div>
 
                     <div id="studio-tab-output" class="studio-tab-content active">
-                        <div class="console-textarea" id="outputArea">{{ output if output else 'Click "Run" to see output here.' }}</div>
+                        <div class="console-textarea" id="outputArea">{{ output if output else '' }}</div>
                     </div>
 
                     <div id="studio-tab-input" class="studio-tab-content">
                         <textarea name="program_input" id="program_input" class="console-textarea"
-                            placeholder="Enter standard input here... (one value per line)">{{ program_input }}</textarea>
+                            placeholder="">{{ program_input }}</textarea>
                     </div>
                 </div>
             </div>
@@ -202,8 +201,6 @@
     <!-- Scripts -->
     <script id="templates-data" type="application/json">{{ templates|tojson|safe }}</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/anyword-hint.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
@@ -218,18 +215,7 @@
             indentUnit: 4,
             lineWrapping: true,
             autoCloseBrackets: true,
-            matchBrackets: true,
-            extraKeys: {"Ctrl-Space": "autocomplete"}
-        });
-
-        // Trigger autocomplete on typing
-        codeEditor.on("inputRead", function(editor, change) {
-            if (change.origin !== "paste" && !editor.state.completionActive) {
-                var ch = change.text[0];
-                if (/[a-zA-Z_#]/.test(ch)) { 
-                    CodeMirror.commands.autocomplete(editor, null, {completeSingle: false});
-                }
-            }
+            matchBrackets: true
         });
 
         // Nexus Custom Dialog System
