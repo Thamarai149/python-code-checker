@@ -185,6 +185,7 @@ def check_and_run_code(language, code, program_input):
                 return "❌ Execution timeout (30 seconds)", None, exec_time
 
     elif language == "python":
+        tmpfile_path = None
         try:
             compile(code, "<string>", "exec")  # Syntax check
             with tempfile.NamedTemporaryFile(delete=False, suffix=".py") as tmpfile:
@@ -203,7 +204,7 @@ def check_and_run_code(language, code, program_input):
             exec_time = time.time() - start_time
             return str(e), None, exec_time
         finally:
-            if 'tmpfile_path' in locals() and os.path.exists(tmpfile_path):
+            if tmpfile_path and os.path.exists(tmpfile_path):
                 try:
                     os.unlink(tmpfile_path)
                 except:
