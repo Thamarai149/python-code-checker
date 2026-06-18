@@ -10,11 +10,11 @@ import uuid
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here-change-in-production'
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-fallback-key-change-in-production')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
-# Create uploads directory if it doesn't exist
+# Create uploads directory if it doesn't exist (ephemeral on Render free tier)
 os.makedirs('uploads', exist_ok=True)
 os.makedirs('shared_codes', exist_ok=True)
 
@@ -221,12 +221,10 @@ def check_and_run_code(language, code, program_input):
         exec_time = time.time() - start_time
         return "✅ HTML/CSS/JS preview compiled successfully.", code, exec_time
         
-    # Toolchain configuration (Force 64-bit MinGW-w64)
+    # Toolchain configuration (Linux/Render — gcc and g++ available natively)
     env = os.environ.copy()
-    mingw64_path = r"C:\ProgramData\mingw64\mingw64\bin"
-    env["PATH"] = mingw64_path + ";" + env["PATH"]
-    gcc_path = os.path.join(mingw64_path, "gcc.exe")
-    gpp_path = os.path.join(mingw64_path, "g++.exe")
+    gcc_path = "gcc"
+    gpp_path = "g++"
     if language == "java":
         with tempfile.TemporaryDirectory() as tmpdir:
             java_file = os.path.join(tmpdir, "Main.java")
@@ -307,7 +305,7 @@ def check_and_run_code(language, code, program_input):
     elif language == "c":
         with tempfile.TemporaryDirectory() as tmpdir:
             c_file = os.path.join(tmpdir, "program.c")
-            exe_file = os.path.join(tmpdir, "program.exe")
+            exe_file = os.path.join(tmpdir, "program")
             with open(c_file, "w") as f:
                 f.write(code)
 
@@ -339,7 +337,7 @@ def check_and_run_code(language, code, program_input):
     elif language == "cpp":
         with tempfile.TemporaryDirectory() as tmpdir:
             cpp_file = os.path.join(tmpdir, "program.cpp")
-            exe_file = os.path.join(tmpdir, "program.exe")
+            exe_file = os.path.join(tmpdir, "program")
             with open(cpp_file, "w") as f:
                 f.write(code)
 
@@ -371,7 +369,7 @@ def check_and_run_code(language, code, program_input):
     elif language == "csharp":
         with tempfile.TemporaryDirectory() as tmpdir:
             cs_file = os.path.join(tmpdir, "Program.cs")
-            exe_file = os.path.join(tmpdir, "Program.exe")
+            exe_file = os.path.join(tmpdir, "Program")
             with open(cs_file, "w") as f:
                 f.write(code)
 
@@ -443,7 +441,7 @@ def check_and_run_code(language, code, program_input):
     elif language == "rust":
         with tempfile.TemporaryDirectory() as tmpdir:
             rust_file = os.path.join(tmpdir, "main.rs")
-            exe_file = os.path.join(tmpdir, "main.exe")
+            exe_file = os.path.join(tmpdir, "main")
             with open(rust_file, "w") as f:
                 f.write(code)
 
@@ -625,7 +623,7 @@ def check_and_run_code(language, code, program_input):
     elif language == "fortran":
         with tempfile.TemporaryDirectory() as tmpdir:
             f_file = os.path.join(tmpdir, "program.f90")
-            exe_file = os.path.join(tmpdir, "program.exe")
+            exe_file = os.path.join(tmpdir, "program")
             with open(f_file, "w") as f:
                 f.write(code)
 
@@ -648,7 +646,7 @@ def check_and_run_code(language, code, program_input):
     elif language == "cobol":
         with tempfile.TemporaryDirectory() as tmpdir:
             cob_file = os.path.join(tmpdir, "program.cob")
-            exe_file = os.path.join(tmpdir, "program.exe")
+            exe_file = os.path.join(tmpdir, "program")
             with open(cob_file, "w") as f:
                 f.write(code)
 
@@ -671,7 +669,7 @@ def check_and_run_code(language, code, program_input):
     elif language == "pascal":
         with tempfile.TemporaryDirectory() as tmpdir:
             pas_file = os.path.join(tmpdir, "program.pas")
-            exe_file = os.path.join(tmpdir, "program.exe")
+            exe_file = os.path.join(tmpdir, "program")
             with open(pas_file, "w") as f:
                 f.write(code)
 
@@ -711,7 +709,7 @@ def check_and_run_code(language, code, program_input):
     elif language == "objectivec":
         with tempfile.TemporaryDirectory() as tmpdir:
             m_file = os.path.join(tmpdir, "program.m")
-            exe_file = os.path.join(tmpdir, "program.exe")
+            exe_file = os.path.join(tmpdir, "program")
             with open(m_file, "w") as f:
                 f.write(code)
 
@@ -735,7 +733,7 @@ def check_and_run_code(language, code, program_input):
         with tempfile.TemporaryDirectory() as tmpdir:
             asm_file = os.path.join(tmpdir, "program.asm")
             obj_file = os.path.join(tmpdir, "program.o")
-            exe_file = os.path.join(tmpdir, "program.exe")
+            exe_file = os.path.join(tmpdir, "program")
             with open(asm_file, "w") as f:
                 f.write(code)
 
@@ -890,7 +888,7 @@ def check_and_run_code(language, code, program_input):
     elif language == "vb":
         with tempfile.TemporaryDirectory() as tmpdir:
             vb_file = os.path.join(tmpdir, "Program.vb")
-            exe_file = os.path.join(tmpdir, "Program.exe")
+            exe_file = os.path.join(tmpdir, "Program")
             with open(vb_file, "w") as f:
                 f.write(code)
 
