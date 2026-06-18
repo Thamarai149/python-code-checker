@@ -82,7 +82,7 @@ input[type="reset"],
 input[type="file"],
 .switch,
 .slider {
-    cursor: pointer;
+    cursor: pointer !important;
 }
 
 /* Text cursor — editable / readable text areas */
@@ -99,7 +99,7 @@ textarea,
 .collab-comment-input,
 #workspace-stdin,
 #ai-user-query {
-    cursor: text;
+    cursor: text !important;
 }
 
 /* Not-allowed cursor — disabled states */
@@ -108,7 +108,7 @@ button:disabled,
 input:disabled,
 select:disabled,
 [disabled] {
-    cursor: not-allowed;
+    cursor: not-allowed !important;
     opacity: 0.5;
 }
 
@@ -116,34 +116,82 @@ select:disabled,
 .workspace-col-left .panel-header,
 .workspace-col-right .panel-header,
 .bottom-console .console-tabs {
-    cursor: grab;
+    cursor: grab !important;
 }
 
 .workspace-col-left .panel-header:active,
 .workspace-col-right .panel-header:active,
 .bottom-console .console-tabs:active {
-    cursor: grabbing;
+    cursor: grabbing !important;
 }
 
-/* Col-resize — resizable column borders */
-.workspace-col-left,
-.workspace-col-right {
-    resize: horizontal;
-}
-
-.workspace-col-left:hover > *:first-child,
-.workspace-col-right:hover > *:first-child {
-    cursor: col-resize;
-}
-
-/* Row-resize — resizable bottom console */
+/* ns-resize — vertical splitter between editor and bottom console */
 .bottom-console {
-    cursor: row-resize;
+    cursor: ns-resize !important;
+    position: relative;
+}
+
+/* Pseudo-element resize handle strip at the top of the console */
+.bottom-console::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    cursor: ns-resize !important;
+    z-index: 20;
+    background: transparent;
+}
+
+.bottom-console:hover::before {
+    background: rgba(88, 166, 255, 0.15);
 }
 
 .bottom-console .console-tab-content,
 .bottom-console .console-status-bar {
-    cursor: default;
+    cursor: default !important;
+}
+
+/* ew-resize — horizontal splitter on left/right workspace columns */
+.workspace-col-left {
+    position: relative;
+}
+
+.workspace-col-left::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 100%;
+    cursor: ew-resize !important;
+    z-index: 20;
+    background: transparent;
+}
+
+.workspace-col-left:hover::after {
+    background: rgba(88, 166, 255, 0.15);
+}
+
+.workspace-col-right {
+    position: relative;
+}
+
+.workspace-col-right::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    cursor: ew-resize !important;
+    z-index: 20;
+    background: transparent;
+}
+
+.workspace-col-right:hover::before {
+    background: rgba(88, 166, 255, 0.15);
 }
 
 /* Copy cursor — output/code display text */
@@ -151,55 +199,55 @@ select:disabled,
 .design-spec,
 pre,
 code {
-    cursor: copy;
+    cursor: copy !important;
 }
 
 /* Zoom-in — activity graph cells on hover */
 .activity-cell:hover {
-    cursor: zoom-in;
+    cursor: zoom-in !important;
 }
 
 /* Help cursor — info/tooltip elements */
 .landing-badge,
 [title],
 [data-tooltip] {
-    cursor: help;
+    cursor: help !important;
 }
 
 /* Progress bar — non-interactive read-only */
 .progress-bar-container,
 .progress-fill {
-    cursor: default;
+    cursor: default !important;
 }
 
-/* Monaco editor container — crosshair for precision editing feel */
+/* Monaco editor container — crosshair for precision editing */
 #monaco-editor-target {
-    cursor: crosshair;
+    cursor: crosshair !important;
 }
 
 /* Loading/spinner overlay — wait cursor */
 .editor-loading-overlay,
 .spinner {
-    cursor: wait;
+    cursor: wait !important;
 }
 
 /* Sidebar nav active item */
 .nav-item.active {
-    cursor: default;
+    cursor: default !important;
 }
 
 /* Chat bubbles */
 .chat-bubble {
-    cursor: default;
+    cursor: default !important;
 }
 
 .chat-bubble.user {
-    cursor: text;
+    cursor: text !important;
 }
 
 /* Modal overlay background */
 .about-modal {
-    cursor: default;
+    cursor: default !important;
 }
 
 /* ===== END CURSOR SYSTEM ===== */
