@@ -49,8 +49,8 @@ class Program {
         Console.WriteLine("Hello, C#!");
     }
 }""",
-    "ruby": """# Ruby code
-puts "Hello, Ruby!\"""",
+    "ruby": '''# Ruby code
+puts "Hello, Ruby!"''',
     "php": """<?php
 echo "Hello, PHP!\\n";
 ?>""",
@@ -64,8 +64,8 @@ func main() {
     "rust": """fn main() {
     println!("Hello, Rust!");
 }""",
-    "bash": """#!/bin/bash
-echo "Hello, Bash!\"""",
+    "bash": '''#!/bin/bash
+echo "Hello, Bash!"''',
     "perl": """#!/usr/bin/perl
 print "Hello, Perl!\\n";""",
     "r": """# R code
@@ -99,7 +99,8 @@ begin
   writeln('Hello, Pascal!');
 end.""",
     "haskell": """main :: IO ()
-main = putStrLn "Hello, Haskell!\"""",
+main = putStrLn "Hello, Haskell!"
+""",
     "objectivec": """#import <Foundation/Foundation.h>
 
 int main() {
@@ -136,9 +137,9 @@ main :- write('Hello, Prolog!'), nl, halt.""",
 
 start() ->
     io:format("Hello, Erlang!~n").""",
-    "elixir": """IO.puts "Hello, Elixir!\"""",
+    "elixir": '''IO.puts "Hello, Elixir!"''',
     "clojure": """(println "Hello, Clojure!")""",
-    "fsharp": """printfn "Hello, F#!\"""",
+    "fsharp": '''printfn "Hello, F#!"''',
     "vb": """Module Hello
     Sub Main()
         Console.WriteLine("Hello, Visual Basic!")

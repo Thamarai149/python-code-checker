@@ -258,8 +258,10 @@
                             <div class="spinner"></div>
                             <span style="font-size:12px; color:var(--text-dim)">Loading Monaco Editor engine...</span>
                         </div>
-                        <!-- Monaco Container div -->
-                        <div id="monaco-editor-target" style="width:100%; height:100%;"></div>
+                        <!-- Monaco / Textarea Container -->
+                        <div id="monaco-editor-target" style="width:100%; height:100%; position:relative;">
+                            <textarea id="code-textarea" class="workspace-textarea" placeholder="Write code here..."></textarea>
+                        </div>
                         
                         <!-- Floating controls -->
                         <div class="editor-controls">
@@ -597,32 +599,34 @@
 
         // Window load setup
         window.addEventListener('load', () => {
-            // Load Monaco editor framework asynchronously
-            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' }});
-            require(['vs/editor/editor'], function() {
+            const textarea = document.getElementById('code-textarea');
+
+            function initializeTextareaEditor() {
                 document.getElementById('editor-loading').style.display = 'none';
-                
-                // Read stored values if any
+
                 const localCode = localStorage.getItem('nexus_autosave_code');
                 const localLang = localStorage.getItem('nexus_autosave_lang') || 'python';
                 currentLanguage = localLang;
                 document.getElementById('language').value = currentLanguage;
-                
-                const starterCode = localCode || templates[currentLanguage] || '';
-                
-                editor = monaco.editor.create(document.getElementById('monaco-editor-target'), {
-                    value: starterCode,
-                    language: mapMonacoLanguage(currentLanguage),
-                    theme: 'vs-dark',
-                    fontSize: fontSize,
-                    fontFamily: "'Fira Code', 'Cascadia Code', monospace",
-                    automaticLayout: true,
-                    wordWrap: lineWrap ? 'on' : 'off',
-                    tabSize: 4,
-                    minimap: { enabled: true }
-                });
 
-                // Auto-save changes handler
+                textarea.value = localCode || templates[currentLanguage] || '';
+                textarea.style.fontSize = fontSize + 'px';
+                textarea.style.whiteSpace = 'pre-wrap';
+
+                editor = {
+                    getValue: () => textarea.value,
+                    setValue: (value) => { textarea.value = value; },
+                    updateOptions: (options) => {
+                        if (options.fontSize) textarea.style.fontSize = options.fontSize + 'px';
+                        if (options.wordWrap) textarea.style.whiteSpace = options.wordWrap === 'on' ? 'pre-wrap' : 'pre';
+                    },
+                    layout: () => {},
+                    onDidChangeModelContent: (callback) => textarea.addEventListener('input', callback),
+                    getModel: () => ({})
+                };
+
+                window.monaco = window.monaco || { editor: { setModelLanguage: function(){}, create: function(){} } };
+
                 editor.onDidChangeModelContent(() => {
                     const isAutosave = document.getElementById('settings-autosave').checked;
                     if (isAutosave) {
@@ -630,10 +634,46 @@
                         localStorage.setItem('nexus_autosave_lang', currentLanguage);
                     }
                 });
-                
-                // Explorer filenames trigger
+
                 updateExplorerLabel();
-            });
+            }
+
+            if (typeof require !== 'undefined' && require.config) {
+                require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' }});
+                require(['vs/editor/editor'], function() {
+                    document.getElementById('editor-loading').style.display = 'none';
+
+                    const localCode = localStorage.getItem('nexus_autosave_code');
+                    const localLang = localStorage.getItem('nexus_autosave_lang') || 'python';
+                    currentLanguage = localLang;
+                    document.getElementById('language').value = currentLanguage;
+
+                    const starterCode = localCode || templates[currentLanguage] || '';
+                    editor = monaco.editor.create(document.getElementById('monaco-editor-target'), {
+                        value: starterCode,
+                        language: mapMonacoLanguage(currentLanguage),
+                        theme: 'vs-dark',
+                        fontSize: fontSize,
+                        fontFamily: "'Fira Code', 'Cascadia Code', monospace",
+                        automaticLayout: true,
+                        wordWrap: lineWrap ? 'on' : 'off',
+                        tabSize: 4,
+                        minimap: { enabled: true }
+                    });
+
+                    editor.onDidChangeModelContent(() => {
+                        const isAutosave = document.getElementById('settings-autosave').checked;
+                        if (isAutosave) {
+                            localStorage.setItem('nexus_autosave_code', editor.getValue());
+                            localStorage.setItem('nexus_autosave_lang', currentLanguage);
+                        }
+                    });
+
+                    updateExplorerLabel();
+                }, initializeTextareaEditor);
+            } else {
+                initializeTextareaEditor();
+            }
 
             // Populate dashboard quick templates
             populateTemplatesList();
@@ -1040,16 +1080,8 @@
 
         // View Tabs console
         function switchConsoleTab(tabName) {
-            document.querySelectorAll('.console-tab').forEach(t => {
-                if (t.parentNode.parentNode.className.includes('col-center') || t.id.startsWith('tab-')) {
-                    t.classList.remove('active');
-                }
-            });
-            document.querySelectorAll('.console-tab-content').forEach(c => {
-                if (c.parentNode.className.includes('col-center')) {
-                    c.classList.remove('active');
-                }
-            });
+            document.querySelectorAll('.bottom-console .console-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.bottom-console .console-tab-content').forEach(c => c.classList.remove('active'));
 
             document.getElementById(`tab-${tabName}`).classList.add('active');
             document.getElementById(`content-${tabName}`).classList.add('active');
