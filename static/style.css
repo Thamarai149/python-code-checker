@@ -44,6 +44,166 @@
     scrollbar-color: var(--glass-border) transparent;
 }
 
+/* ===== CURSOR / MOUSE POINTER SYSTEM ===== */
+
+/* Default cursor for the app */
+body {
+    cursor: default;
+}
+
+/* Pointer cursor — clickable elements */
+a,
+button,
+[role="button"],
+label[for],
+.nav-item,
+.logo,
+.profile-avatar,
+.feature-card,
+.proj-card,
+.file-tree-item,
+.console-tab,
+.nx-btn,
+.nx-btn-run,
+.nx-btn-stop,
+.ai-quick-btn,
+.editor-control-btn,
+.modal-close,
+.studio-select,
+.activity-cell,
+.landing-badge,
+.user-presence-badge,
+.sidebar-profile,
+input[type="checkbox"],
+input[type="radio"],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+input[type="file"],
+.switch,
+.slider {
+    cursor: pointer;
+}
+
+/* Text cursor — editable / readable text areas */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+input[type="url"],
+textarea,
+.workspace-textarea,
+.ai-input,
+.nx-input,
+.collab-comment-input,
+#workspace-stdin,
+#ai-user-query {
+    cursor: text;
+}
+
+/* Not-allowed cursor — disabled states */
+button:disabled,
+.nx-btn:disabled,
+input:disabled,
+select:disabled,
+[disabled] {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Grab / grabbing — draggable panels */
+.workspace-col-left .panel-header,
+.workspace-col-right .panel-header,
+.bottom-console .console-tabs {
+    cursor: grab;
+}
+
+.workspace-col-left .panel-header:active,
+.workspace-col-right .panel-header:active,
+.bottom-console .console-tabs:active {
+    cursor: grabbing;
+}
+
+/* Col-resize — resizable column borders */
+.workspace-col-left,
+.workspace-col-right {
+    resize: horizontal;
+}
+
+.workspace-col-left:hover > *:first-child,
+.workspace-col-right:hover > *:first-child {
+    cursor: col-resize;
+}
+
+/* Row-resize — resizable bottom console */
+.bottom-console {
+    cursor: row-resize;
+}
+
+.bottom-console .console-tab-content,
+.bottom-console .console-status-bar {
+    cursor: default;
+}
+
+/* Copy cursor — output/code display text */
+.console-output,
+.design-spec,
+pre,
+code {
+    cursor: copy;
+}
+
+/* Zoom-in — activity graph cells on hover */
+.activity-cell:hover {
+    cursor: zoom-in;
+}
+
+/* Help cursor — info/tooltip elements */
+.landing-badge,
+[title],
+[data-tooltip] {
+    cursor: help;
+}
+
+/* Progress bar — non-interactive read-only */
+.progress-bar-container,
+.progress-fill {
+    cursor: default;
+}
+
+/* Monaco editor container — crosshair for precision editing feel */
+#monaco-editor-target {
+    cursor: crosshair;
+}
+
+/* Loading/spinner overlay — wait cursor */
+.editor-loading-overlay,
+.spinner {
+    cursor: wait;
+}
+
+/* Sidebar nav active item */
+.nav-item.active {
+    cursor: default;
+}
+
+/* Chat bubbles */
+.chat-bubble {
+    cursor: default;
+}
+
+.chat-bubble.user {
+    cursor: text;
+}
+
+/* Modal overlay background */
+.about-modal {
+    cursor: default;
+}
+
+/* ===== END CURSOR SYSTEM ===== */
+
 *::-webkit-scrollbar {
     width: 6px;
     height: 6px;
