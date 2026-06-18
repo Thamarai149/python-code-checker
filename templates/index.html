@@ -275,19 +275,19 @@
                     <!-- Output Console panel -->
                     <div class="bottom-console">
                         <div class="console-tabs">
-                            <div class="console-tab active" id="tab-output" onclick="switchConsoleTab('output')">Terminal Output</div>
-                            <div class="console-tab" id="tab-stdin" onclick="switchConsoleTab('stdin')">Standard Input (stdin)</div>
+                            <div class="console-tab active" id="tab-output" onclick="switchConsoleTab('output')">Terminal</div>
                             <div class="console-tab" id="tab-preview" onclick="switchConsoleTab('preview')">HTML Web Preview</div>
                         </div>
 
                         <!-- Terminal content -->
-                        <div class="console-tab-content active" id="content-output">
-                            <pre class="console-output" id="terminal-stdout">Console synchronized. Write code and hit Run to execute details.</pre>
-                        </div>
-                        
-                        <!-- Stdin content -->
-                        <div class="console-tab-content" id="content-stdin" style="padding: 0;">
-                            <textarea id="workspace-stdin" style="width:100%; height:100%; background:#05070a; color:#fff; border:none; padding:15px; font-family:var(--font-mono); resize:none; font-size:13px; outline:none;" placeholder="Enter input arguments here (one per line)..."></textarea>
+                        <div class="console-tab-content active" id="content-output" style="display:flex; flex-direction:column; gap:10px; padding:0;">
+                            <div style="flex:1; min-height:120px; overflow:auto; padding:15px; background:#05070a;">
+                                <pre class="console-output" id="terminal-stdout">Console synchronized. Write code and hit Run to execute details.</pre>
+                            </div>
+                            <div style="background:#0b1119; border-top:1px solid rgba(255,255,255,0.08); padding:12px;">
+                                <label for="workspace-stdin" style="display:block; font-size:11px; color:var(--text-dim); margin-bottom:6px;">Terminal Input</label>
+                                <textarea id="workspace-stdin" style="width:100%; height:110px; background:#05070a; color:#fff; border:1px solid rgba(255,255,255,0.08); padding:12px; font-family:var(--font-mono); resize:vertical; font-size:13px; outline:none;" placeholder="Enter input arguments here..."></textarea>
+                            </div>
                         </div>
 
                         <!-- HTML preview sandbox -->
