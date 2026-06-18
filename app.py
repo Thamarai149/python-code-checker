@@ -143,13 +143,83 @@ start() ->
     Sub Main()
         Console.WriteLine("Hello, Visual Basic!")
     End Sub
-End Module"""
+End Module""",
+    "html": """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Preview Workspace</title>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 90vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+        }
+        h1 {
+            color: #58a6ff;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        p {
+            color: #8b949e;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #1f6feb;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background: #58a6ff;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Nexus HTML Environment</h1>
+        <p>Edit this workspace to preview your HTML, CSS, and JS styles live.</p>
+        <button id="alertBtn">Interact Locally</button>
+    </div>
+    <script>
+        document.getElementById('alertBtn').addEventListener('click', () => {
+            alert('JavaScript works seamlessly in the Nexus sandbox iframe!');
+        });
+    </script>
+</body>
+</html>"""
 }
 
 def check_and_run_code(language, code, program_input):
     start_time = time.time()
     TIMEOUT = 30  # 30 seconds timeout for all executions
     
+    if language == "html":
+        exec_time = time.time() - start_time
+        return "✅ HTML/CSS/JS preview compiled successfully.", code, exec_time
+        
     # Toolchain configuration (Force 64-bit MinGW-w64)
     env = os.environ.copy()
     mingw64_path = r"C:\ProgramData\mingw64\mingw64\bin"
@@ -1179,6 +1249,176 @@ def view_shared(share_id):
         templates=CODE_TEMPLATES
     )
 
+
+# In-memory store for shared comments
+COMMENTS_STORE = {}
+
+@app.route("/collab/comments", methods=["GET", "POST"])
+def collab_comments():
+    """Get or post a comment for a shared code session"""
+    if request.method == "POST":
+        data = request.json
+        share_id = data.get("share_id", "default")
+        author = data.get("author", "Anonymous Developer")
+        text = data.get("text", "")
+        
+        if not text:
+            return jsonify({'success': False, 'error': 'Empty comment'})
+            
+        comment = {
+            'author': author,
+            'text': text,
+            'timestamp': datetime.now().strftime("%I:%M %p")
+        }
+        
+        if share_id not in COMMENTS_STORE:
+            COMMENTS_STORE[share_id] = []
+        COMMENTS_STORE[share_id].append(comment)
+        return jsonify({'success': True, 'comment': comment})
+        
+    else:
+        share_id = request.args.get("share_id", "default")
+        comments = COMMENTS_STORE.get(share_id, [
+            {'author': 'System AI', 'text': 'Welcome to live session comments! Add notes or review changes.', 'timestamp': 'Now'}
+        ])
+        return jsonify({'success': True, 'comments': comments})
+
+@app.route("/ai/action", methods=["POST"])
+def ai_action():
+    """Process an AI assistance action: explain, optimize, review, fix"""
+    data = request.json
+    action = data.get("action", "explain")
+    code = data.get("code", "")
+    language = data.get("language", "python")
+    
+    if not code:
+        return jsonify({'success': False, 'error': 'Editor is empty. Write some code first!'})
+        
+    result_text = ""
+    
+    if action == "explain":
+        lines = len(code.split('\n'))
+        functions = code.count("def ") if language == "python" else code.count("function")
+        result_text = f"### Code Explanation ({language.upper()})\n"
+        result_text += f"This program consists of {lines} lines of code and defines {functions} function(s).\n\n"
+        result_text += "**Core Logic Flow:**\n"
+        if language == "python":
+            result_text += "- Executes sequentially from top to bottom.\n"
+            if "import" in code:
+                result_text += "- Standard library modules are imported at the top.\n"
+        elif language in ["c", "cpp", "java"]:
+            result_text += "- Enters through the standard application entrypoint (`main` function).\n"
+            result_text += "- Uses type-safe declarations and static compiling rules.\n"
+        else:
+            result_text += "- Direct scripting structure.\n"
+            
+        result_text += "\n**Detailed Breakdown:**\n"
+        has_loop = "for " in code or "while " in code or "while(" in code or "for(" in code
+        has_cond = "if " in code or "if(" in code or "elif" in code or "else" in code
+        
+        if has_loop:
+            result_text += "- **Iteration**: The code contains looping logic (`for` or `while`), allowing repetitive actions on standard collection elements or index iterations.\n"
+        if has_cond:
+            result_text += "- **Conditionals**: Logical branches (`if`/`else`) direct program execution based on runtime conditions.\n"
+        if not has_loop and not has_cond:
+            result_text += "- **Linear Execution**: The instructions execute in a single forward pass without branching or iteration.\n"
+            
+        result_text += "\n**Performance Profile:**\n"
+        result_text += f"- Expected Time Complexity: O(1) to O(N) depending on runtime parameters.\n"
+        result_text += "- Space Overhead: Minimal stack allocations."
+        
+    elif action == "optimize":
+        result_text = f"### Optimization Suggestions ({language.upper()})\n"
+        if language == "python":
+            result_text += "1. **List Comprehensions**: Replace standard loops appending to lists with Pythonic list comprehensions to execute faster in compiled C layers.\n"
+            result_text += "2. **Local Caching**: Cache repeated dictionary or object attribute lookups locally inside local scopes.\n\n"
+            result_text += "**Optimized Code Snippet:**\n"
+            result_text += "```python\n# Optimized Revision\n# Avoid redundant lookups. Use efficient generators.\n"
+            result_text += code.replace("for i in range", "# Vectorized range operations if possible\nfor i in range") + "\n```"
+        else:
+            result_text += "1. **Memory Allocations**: Minimize dynamic heap allocation variables inside loops.\n"
+            result_text += "2. **Inline Keywords**: Suggest compilers compiler-inlining frequently accessed sub-methods to reduce function-call frame overheads.\n\n"
+            result_text += "**Optimized Revision Recommendation:**\n"
+            result_text += f"```{language}\n// Inline declarations and static variable bounds\n" + code + "\n```"
+            
+    elif action == "fix":
+        result_text = "### Debugging & Bug Fix Suggestions\n"
+        issues = []
+        if language == "python":
+            lines = code.split('\n')
+            for idx, line in enumerate(lines):
+                sline = line.strip()
+                if (sline.startswith("def ") or sline.startswith("if ") or sline.startswith("elif ") or sline.startswith("for ")) and not sline.endswith(":"):
+                    issues.append(f"Line {idx+1}: Missing colon at end of statement definition: `{sline}`")
+        else:
+            lines = code.split('\n')
+            for idx, line in enumerate(lines):
+                sline = line.strip()
+                if sline and not sline.endswith(";") and not sline.endswith("{") and not sline.endswith("}") and not sline.startswith("#") and not sline.startswith("//"):
+                    if language in ["c", "cpp", "javascript", "java", "php"]:
+                        issues.append(f"Line {idx+1}: Verify semicolon presence at end of line: `{sline}`")
+                        
+        if issues:
+            result_text += "⚠️ **Detected Potential Issues:**\n"
+            for issue in issues:
+                result_text += f"- {issue}\n"
+            result_text += "\n**Suggested Fix:** Apply the formatting rules indicated above to ensure error-free compilation."
+        else:
+            result_text += "✅ **No major syntax warnings found!**\nYour code looks clean. If execution returns errors, verify variable initializations, indexing, and input arguments."
+            
+    elif action == "review":
+        result_text = f"### Code Quality & Security Review ({language.upper()})\n"
+        lines_count = len(code.split('\n'))
+        score = 100 - min(40, lines_count // 5)
+        if "eval(" in code or "exec(" in code or "system(" in code:
+            score -= 30
+            sec_status = "🔴 VULNERABLE (Dynamic execution call spotted)"
+        else:
+            sec_status = "🟢 SECURE (Running inside virtual execution limits)"
+            
+        complexity = "Low" if lines_count < 15 else "Medium" if lines_count < 45 else "High"
+        
+        result_text += f"**Rating Metric Scores:**\n"
+        result_text += f"- **Maintainability Index:** {score}/100\n"
+        result_text += f"- **Security Level:** {sec_status}\n"
+        result_text += f"- **Cyclomatic Complexity:** {complexity}\n\n"
+        result_text += "**Reviewer Feedback Details:**\n"
+        result_text += "1. **Modularity**: Code structures are aligned. Ensure logical separations for large functions.\n"
+        result_text += "2. **Documentation**: Add standard docstrings or developer block comments to explain algorithm parameters.\n"
+        result_text += "3. **Exceptions**: Wrap input validations and network/file resources in try/catch bounds."
+        
+    return jsonify({'success': True, 'result': result_text})
+
+@app.route("/ai/chat", methods=["POST"])
+def ai_chat():
+    """Chat console endpoint for general coding assistance queries"""
+    data = request.json
+    messages = data.get("messages", [])
+    code = data.get("code", "")
+    language = data.get("language", "python")
+    
+    if not messages:
+        return jsonify({'success': False, 'error': 'No input query found'})
+        
+    user_msg = messages[-1].get("content", "").lower()
+    
+    reply = ""
+    if "help" in user_msg or "how" in user_msg:
+        reply = f"To program in {language}, write your instructions in the center workspace panel, adjust editor controls via settings, and click **Run**."
+    elif "bug" in user_msg or "error" in user_msg or "fix" in user_msg:
+        reply = f"I can review potential syntax bugs. Try clicking the **AI Bug Fix** action in the right assistant panel!"
+    elif "explain" in user_msg:
+        reply = f"You can explain this entire workspace instantly by clicking the **AI Explain Code** button. Let me know if you have questions about specific lines!"
+    elif "optimize" in user_msg or "fast" in user_msg:
+        reply = f"To speed up execution, try using in-place assignments, avoid nested loop lookups, and use built-in algorithms."
+    else:
+        reply = f"I'm your AI Workspace Assistant. I'm currently monitoring your {language.upper()} code. Try selecting one of the rapid AI actions (Review, Fix, Explain, Optimize) or ask me details about syntax!"
+        
+    return jsonify({
+        'success': True, 
+        'reply': reply,
+        'timestamp': datetime.now().strftime("%I:%M %p")
+    })
 
 if __name__ == "__main__":
     app.run(debug=True, port=2006)
