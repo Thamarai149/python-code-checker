@@ -308,5 +308,3 @@ For issues and questions:
 ---
 
 **Made with ❤️ for developers who love coding in multiple languages!**
-
-**Project_URL:https://python-code-checker.onrender.com -  Multi-Language Online IDE** 
