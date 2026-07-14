@@ -193,7 +193,7 @@ try {
             $file = $temp_dir . DIRECTORY_SEPARATOR . 'program.py';
             file_put_contents($file, $code);
             $py = python_bin();
-            $res = run_cmd("$py \"$file\"", $program_input, $TIMEOUT);
+            $res = run_cmd([$py, $file], $program_input, $TIMEOUT);
 
             if ($res['timeout']) {
                 $result = '⏱️ Execution timeout (30s limit reached).';
@@ -212,7 +212,7 @@ try {
             $file = $temp_dir . DIRECTORY_SEPARATOR . 'program.js';
             file_put_contents($file, $code);
             $nd = node_bin();
-            $res = run_cmd("$nd \"$file\"", $program_input, $TIMEOUT);
+            $res = run_cmd([$nd, $file], $program_input, $TIMEOUT);
 
             if ($res['timeout']) {
                 $result = '⏱️ Execution timeout (30s limit reached).';
@@ -229,7 +229,7 @@ try {
         case 'php':
             $file = $temp_dir . DIRECTORY_SEPARATOR . 'program.php';
             file_put_contents($file, $code);
-            $res = run_cmd("php \"$file\"", $program_input, $TIMEOUT);
+            $res = run_cmd(['php', $file], $program_input, $TIMEOUT);
 
             if ($res['timeout']) {
                 $result = '⏱️ Execution timeout (30s limit reached).';
@@ -244,16 +244,17 @@ try {
 
         // ---- C ----
         case 'c':
-            $src  = $temp_dir . DIRECTORY_SEPARATOR . 'program.c';
-            $bin  = $temp_dir . DIRECTORY_SEPARATOR . 'program_out';
+            $src = $temp_dir . DIRECTORY_SEPARATOR . 'program.c';
+            $bin = $temp_dir . DIRECTORY_SEPARATOR . 'program_out.exe';
             file_put_contents($src, $code);
 
-            $comp = run_cmd(gcc_bin() . " \"$src\" -o \"$bin\" -lm", '', $TIMEOUT);
+            $gcc = gcc_bin_path();
+            $comp = run_cmd([$gcc, $src, '-o', $bin, '-lm'], '', $TIMEOUT);
             if ($comp['exit_code'] !== 0) {
                 $result = '❌ Compilation Error';
-                $output = "❌ Compilation Error:\n" . $comp['stderr'];
+                $output = "❌ Compilation Error:\n" . ($comp['stderr'] ?: $comp['stdout']);
             } else {
-                $res = run_cmd("\"$bin\"", $program_input, $TIMEOUT);
+                $res = run_cmd([$bin], $program_input, $TIMEOUT);
                 if ($res['timeout']) {
                     $result = '⏱️ Execution timeout (30s limit reached).';
                     $output = $result;
@@ -269,16 +270,17 @@ try {
         // ---- C++ ----
         case 'cpp':
         case 'c++':
-            $src  = $temp_dir . DIRECTORY_SEPARATOR . 'program.cpp';
-            $bin  = $temp_dir . DIRECTORY_SEPARATOR . 'program_out';
+            $src = $temp_dir . DIRECTORY_SEPARATOR . 'program.cpp';
+            $bin = $temp_dir . DIRECTORY_SEPARATOR . 'program_out.exe';
             file_put_contents($src, $code);
 
-            $comp = run_cmd(gpp_bin() . " \"$src\" -o \"$bin\" -std=c++17 -lm", '', $TIMEOUT);
+            $gpp = gpp_bin_path();
+            $comp = run_cmd([$gpp, $src, '-o', $bin, '-std=c++17', '-lm'], '', $TIMEOUT);
             if ($comp['exit_code'] !== 0) {
                 $result = '❌ Compilation Error';
-                $output = "❌ Compilation Error:\n" . $comp['stderr'];
+                $output = "❌ Compilation Error:\n" . ($comp['stderr'] ?: $comp['stdout']);
             } else {
-                $res = run_cmd("\"$bin\"", $program_input, $TIMEOUT);
+                $res = run_cmd([$bin], $program_input, $TIMEOUT);
                 if ($res['timeout']) {
                     $result = '⏱️ Execution timeout (30s limit reached).';
                     $output = $result;
@@ -296,12 +298,12 @@ try {
             $src = $temp_dir . DIRECTORY_SEPARATOR . 'Main.java';
             file_put_contents($src, $code);
 
-            $comp = run_cmd("javac \"$src\"", '', $TIMEOUT);
+            $comp = run_cmd(['javac', $src], '', $TIMEOUT);
             if ($comp['exit_code'] !== 0) {
                 $result = '❌ Compilation Error';
-                $output = "❌ Compilation Error:\n" . $comp['stderr'];
+                $output = "❌ Compilation Error:\n" . ($comp['stderr'] ?: $comp['stdout']);
             } else {
-                $res = run_cmd("java -cp \"$temp_dir\" Main", $program_input, $TIMEOUT);
+                $res = run_cmd(['java', '-cp', $temp_dir, 'Main'], $program_input, $TIMEOUT);
                 if ($res['timeout']) {
                     $result = '⏱️ Execution timeout (30s limit reached).';
                     $output = $result;
