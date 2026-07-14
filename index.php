@@ -1068,37 +1068,37 @@ if (isset($_GET['share_id'])) {
 
             fetch('api/run_code.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    'code': code,
-                    'language': language,
-                    'program_input': program_input,
-                    'ajax': 'true'
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code,
+                    language,
+                    program_input
                 })
             })
             .then(res => res.json())
             .then(data => {
-                compInfo.innerText = "Compiler: Finished";
-                
+                compInfo.innerText = 'Compiler: Finished';
+
                 // Show errors or success highlights
-                if (data.result.includes("❌")) {
-                    stdout.className = "console-output error";
-                } else {
-                    stdout.className = "console-output success";
-                    
+                const isError = data.result && (data.result.includes('❌') || data.result.includes('⏱️'));
+                stdout.className = isError ? 'console-output error' : 'console-output success';
+
+                if (!isError) {
                     // Mark active challenge solved if matches keyword
                     checkChallengeStatus(code);
                 }
-                stdout.innerText = data.output;
-                
-                // Set statistics if timing information returned
-                timing.innerText = `Time: 0.05s`; // Simulated default lower bound
-                memory.innerText = `Memory: 12.4 MB`;
+
+                stdout.innerText = data.output || '(No output)';
+
+                // Show real execution time from server
+                const execSecs = data.exec_time ? parseFloat(data.exec_time).toFixed(3) : '---';
+                timing.innerText = `Time: ${execSecs}s`;
+                memory.innerText = `Memory: ~12 MB`;
             })
             .catch(err => {
-                compInfo.innerText = "Compiler: Error";
-                stdout.className = "console-output error";
-                stdout.innerText = "Error launching compiler subprocess: " + err;
+                compInfo.innerText = 'Compiler: Error';
+                stdout.className = 'console-output error';
+                stdout.innerText = '❌ Network error reaching execution engine: ' + err;
             });
         }
 
@@ -1242,10 +1242,30 @@ if (isset($_GET['share_id'])) {
             .then(data => {
                 if (data.success && editor) {
                     editor.setValue(data.code);
-                    Nexus.alert(`Uploaded and loaded file details: "${file.name}" into compiler workspace!`);
+
+                    // Auto-switch language based on detected extension
+                    if (data.language) {
+                        const langSelect = document.getElementById('language');
+                        const supported = Array.from(langSelect.options).map(o => o.value);
+                        if (supported.includes(data.language)) {
+                            langSelect.value = data.language;
+                            currentLanguage = data.language;
+                            if (window.monaco && editor.getModel) {
+                                monaco.editor.setModelLanguage(editor.getModel(), mapMonacoLanguage(data.language));
+                            }
+                            updateExplorerLabel();
+                        }
+                    }
+
+                    Nexus.alert(`File "${data.filename}" uploaded successfully! Language auto-detected: ${(data.language || 'unknown').toUpperCase()}`, 'File Loaded');
                 } else {
-                    Nexus.alert("Upload parsing failed: " + data.error);
+                    Nexus.alert('Upload failed: ' + (data.error || 'Unknown error'), 'Upload Error');
                 }
+                // Reset file input so the same file can be re-uploaded
+                event.target.value = '';
+            })
+            .catch(err => {
+                Nexus.alert('Network error during upload: ' + err, 'Upload Error');
             });
         }
 
