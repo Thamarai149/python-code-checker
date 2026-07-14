@@ -27,6 +27,30 @@ $start_time = microtime(true);
 $TIMEOUT    = 30;
 
 /**
+ * Build an environment array that injects mingw64/bin into PATH so Apache
+ * (running as SYSTEM with a stripped PATH) can find GCC's own DLLs.
+ */
+function build_env() {
+    // Start from current process environment
+    $env = [];
+    foreach ($_SERVER as $k => $v) {
+        if (is_string($v)) $env[$k] = $v;
+    }
+    // Prepend mingw64 and common tool paths so GCC DLLs are found
+    $extra = implode(PATH_SEPARATOR, [
+        'C:\\ProgramData\\mingw64\\mingw64\\bin',
+        'C:\\msys64\\mingw64\\bin',
+        'C:\\msys64\\ucrt64\\bin',
+        'C:\\Windows\\System32',
+        'C:\\Windows',
+    ]);
+    $current = isset($env['PATH']) ? $env['PATH'] : (isset($env['Path']) ? $env['Path'] : '');
+    $env['PATH'] = $extra . PATH_SEPARATOR . $current;
+    $env['Path'] = $env['PATH']; // Windows uses both cases
+    return $env;
+}
+
+/**
  * Run a command with stdin support and timeout.
  * $cmd can be a string (shell command) or an array [binary, arg1, arg2, ...]
  * Array form bypasses the shell entirely — no quoting issues on Windows.
@@ -38,7 +62,10 @@ function run_cmd($cmd, $stdin = '', $timeout = 30) {
         2 => ['pipe', 'w'],
     ];
 
-    $process = proc_open($cmd, $descriptorspec, $pipes);
+    // Pass explicit environment with mingw64 on PATH
+    $env = build_env();
+
+    $process = proc_open($cmd, $descriptorspec, $pipes, null, $env);
 
     if (!is_resource($process)) {
         $label = is_array($cmd) ? implode(' ', $cmd) : $cmd;
