@@ -27,21 +27,24 @@ $start_time = microtime(true);
 $TIMEOUT    = 30;
 
 /**
- * Run a shell command with stdin support and timeout control.
+ * Run a command with stdin support and timeout.
+ * $cmd can be a string (shell command) or an array [binary, arg1, arg2, ...]
+ * Array form bypasses the shell entirely — no quoting issues on Windows.
  */
 function run_cmd($cmd, $stdin = '', $timeout = 30) {
     $descriptorspec = [
-        0 => ['pipe', 'r'],   // stdin
-        1 => ['pipe', 'w'],   // stdout
-        2 => ['pipe', 'w'],   // stderr
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
     ];
 
     $process = proc_open($cmd, $descriptorspec, $pipes);
 
     if (!is_resource($process)) {
+        $label = is_array($cmd) ? implode(' ', $cmd) : $cmd;
         return [
             'stdout'    => '',
-            'stderr'    => "Failed to start process: $cmd",
+            'stderr'    => "Failed to start process: $label",
             'exit_code' => -1,
             'timeout'   => false,
         ];
@@ -157,7 +160,19 @@ if ($language === 'html') {
 }
 
 // ----- Create isolated temp workspace -----
-$temp_dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'nexus_' . uniqid('', true);
+// sys_get_temp_dir() can return 8.3 short paths (e.g. THAMAR~1) on Windows
+// which GCC/G++ cannot handle. Resolve to the full long path first.
+function long_temp_dir() {
+    $raw = sys_get_temp_dir();
+    // On Windows, use realpath() to expand 8.3 short names to full paths
+    if (DIRECTORY_SEPARATOR === '\\') {
+        $resolved = realpath($raw);
+        if ($resolved) return $resolved;
+    }
+    return $raw;
+}
+
+$temp_dir = long_temp_dir() . DIRECTORY_SEPARATOR . 'nexus_' . uniqid('', true);
 if (!mkdir($temp_dir, 0777, true)) {
     echo json_encode([
         'result'    => '❌ Internal Error: Cannot create temp directory.',
