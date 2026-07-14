@@ -97,7 +97,7 @@ function run_cmd($cmd, $stdin = '', $timeout = 30) {
  * Detect Python binary (python3 or python).
  */
 function python_bin() {
-    $check = shell_exec('which python3 2>/dev/null || where python3 2>nul');
+    $check = shell_exec('where python3 2>nul');
     if (trim($check)) return 'python3';
     return 'python';
 }
@@ -106,9 +106,43 @@ function python_bin() {
  * Detect Node.js binary.
  */
 function node_bin() {
-    $check = shell_exec('which node 2>/dev/null || where node 2>nul');
+    $check = shell_exec('where node 2>nul');
     if (trim($check)) return 'node';
     return 'node';
+}
+
+/**
+ * Detect the best available GCC binary.
+ * Prefers the 64-bit mingw64 GCC over the legacy 32-bit MinGW,
+ * which fails with "invalid instruction suffix for push" on modern code.
+ */
+function gcc_bin() {
+    // Explicit 64-bit mingw64 path first (avoids old MinGW on PATH)
+    $candidates = [
+        'C:\\ProgramData\\mingw64\\mingw64\\bin\\gcc.exe',
+        'C:\\msys64\\mingw64\\bin\\gcc.exe',
+        'C:\\msys64\\ucrt64\\bin\\gcc.exe',
+    ];
+    foreach ($candidates as $path) {
+        if (file_exists($path)) return '"' . $path . '"';
+    }
+    // Fallback: whatever is on PATH (works fine inside Docker/Linux)
+    return 'gcc';
+}
+
+/**
+ * Detect the best available G++ binary.
+ */
+function gpp_bin() {
+    $candidates = [
+        'C:\\ProgramData\\mingw64\\mingw64\\bin\\g++.exe',
+        'C:\\msys64\\mingw64\\bin\\g++.exe',
+        'C:\\msys64\\ucrt64\\bin\\g++.exe',
+    ];
+    foreach ($candidates as $path) {
+        if (file_exists($path)) return '"' . $path . '"';
+    }
+    return 'g++';
 }
 
 // ----- HTML/CSS preview - no execution needed -----
@@ -199,7 +233,7 @@ try {
             $bin  = $temp_dir . DIRECTORY_SEPARATOR . 'program_out';
             file_put_contents($src, $code);
 
-            $comp = run_cmd("gcc \"$src\" -o \"$bin\" -lm", '', $TIMEOUT);
+            $comp = run_cmd(gcc_bin() . " \"$src\" -o \"$bin\" -lm", '', $TIMEOUT);
             if ($comp['exit_code'] !== 0) {
                 $result = '❌ Compilation Error';
                 $output = "❌ Compilation Error:\n" . $comp['stderr'];
@@ -224,7 +258,7 @@ try {
             $bin  = $temp_dir . DIRECTORY_SEPARATOR . 'program_out';
             file_put_contents($src, $code);
 
-            $comp = run_cmd("g++ \"$src\" -o \"$bin\" -std=c++17 -lm", '', $TIMEOUT);
+            $comp = run_cmd(gpp_bin() . " \"$src\" -o \"$bin\" -std=c++17 -lm", '', $TIMEOUT);
             if ($comp['exit_code'] !== 0) {
                 $result = '❌ Compilation Error';
                 $output = "❌ Compilation Error:\n" . $comp['stderr'];

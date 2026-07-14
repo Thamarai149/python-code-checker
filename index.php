@@ -469,14 +469,17 @@ if (isset($_GET['share_id'])) {
                             <div class="console-tab" id="tab-preview" onclick="switchConsoleTab('preview')">HTML Web Preview</div>
                         </div>
 
-                        <!-- Terminal content -->
-                        <div class="console-tab-content active" id="content-output" style="display:flex; flex-direction:column; gap:10px; padding:0;">
-                            <div style="flex:1; min-height:120px; overflow:auto; padding:15px; background:#05070a;">
+                        <!-- Terminal content — unified output + input -->
+                        <div class="console-tab-content active" id="content-output" style="display:flex; flex-direction:column; padding:0; overflow:hidden;">
+                            <!-- Output area -->
+                            <div style="flex:1; overflow:auto; padding:14px 18px 8px; background:#020508;">
                                 <pre class="console-output" id="terminal-stdout">Console synchronized. Write code and hit Run to execute details.</pre>
                             </div>
-                            <div style="background:#0b1119; border-top:1px solid rgba(255,255,255,0.08); padding:12px;">
-                                <label for="workspace-stdin" style="display:block; font-size:11px; color:var(--text-dim); margin-bottom:6px;">Terminal Input</label>
-                                <textarea id="workspace-stdin" style="width:100%; height:110px; background:#05070a; color:#fff; border:1px solid rgba(255,255,255,0.08); padding:12px; font-family:var(--font-mono); resize:vertical; font-size:13px; outline:none;" placeholder="Enter input arguments here..."></textarea>
+                            <!-- Inline stdin prompt row -->
+                            <div class="terminal-input-row">
+                                <span class="terminal-prompt">stdin<span class="terminal-prompt-arrow">›</span></span>
+                                <textarea id="workspace-stdin" class="terminal-inline-input" rows="1" placeholder="Type program input here, one value per line…" onkeydown="handleStdinKey(event)" oninput="autoResizeStdin(this)"></textarea>
+                                <button class="terminal-clear-btn" onclick="clearTerminal()" title="Clear terminal"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </div>
 
@@ -1300,6 +1303,32 @@ if (isset($_GET['share_id'])) {
             if (editor) {
                 editor.updateOptions({ wordWrap: lineWrap ? 'on' : 'off' });
             }
+        }
+
+        // ── Terminal stdin helpers ────────────────────────────────
+        // Auto-grow the stdin textarea up to 5 lines
+        function autoResizeStdin(el) {
+            el.style.height = 'auto';
+            const maxH = parseInt(getComputedStyle(el).lineHeight || '18') * 5 + 16;
+            el.style.height = Math.min(el.scrollHeight, maxH) + 'px';
+        }
+
+        // Ctrl+Enter in stdin triggers Run; plain Enter just newlines
+        function handleStdinKey(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                executeWorkspace();
+            }
+        }
+
+        // Clear terminal output
+        function clearTerminal() {
+            const out = document.getElementById('terminal-stdout');
+            out.className = 'console-output';
+            out.innerText = '';
+            document.getElementById('status-compiler-info').innerText = 'Compiler: Idle';
+            document.getElementById('status-timing').innerText = 'Time: 0.00s';
+            document.getElementById('status-memory').innerText = 'Memory: -- MB';
         }
 
         // View Tabs console
