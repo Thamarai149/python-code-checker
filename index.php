@@ -1063,7 +1063,12 @@ if (isset($_GET['share_id'])) {
         function executeWorkspace() {
             if (!editor) return;
             const code = editor.getValue();
-            const language = currentLanguage;
+            // Always read language from the dropdown as the source of truth.
+            // currentLanguage should match, but the dropdown is the definitive value
+            // the user can see — this prevents stale variable bugs entirely.
+            const langEl = document.getElementById('language');
+            const language = langEl ? langEl.value : currentLanguage;
+            currentLanguage = language; // keep in sync
             const program_input = document.getElementById('workspace-stdin').value;
 
             const stdout = document.getElementById('terminal-stdout');
