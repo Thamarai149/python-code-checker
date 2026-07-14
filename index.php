@@ -1096,18 +1096,21 @@ if (isset($_GET['share_id'])) {
             .then(data => {
                 compInfo.innerText = 'Compiler: Finished';
 
-                // Show errors or success highlights
                 const isError = data.result && (data.result.includes('❌') || data.result.includes('⏱️'));
                 stdout.className = isError ? 'console-output error' : 'console-output success';
 
                 if (!isError) {
-                    // Mark active challenge solved if matches keyword
                     checkChallengeStatus(code);
                 }
 
-                stdout.innerText = data.output || '(No output)';
+                // Show output — if it's empty after a compilation error, show a helpful message
+                const outputText = data.output ? data.output.trim() : '';
+                if (!outputText || outputText === '❌ Compilation Error:') {
+                    stdout.innerText = data.result || '❌ Unknown error — no output returned from compiler.';
+                } else {
+                    stdout.innerText = outputText;
+                }
 
-                // Show real execution time from server
                 const execSecs = data.exec_time ? parseFloat(data.exec_time).toFixed(3) : '---';
                 timing.innerText = `Time: ${execSecs}s`;
                 memory.innerText = `Memory: ~12 MB`;

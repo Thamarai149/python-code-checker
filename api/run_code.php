@@ -80,6 +80,10 @@ function run_cmd($cmd, $stdin = '', $timeout = 30) {
     fwrite($pipes[0], $stdin);
     fclose($pipes[0]);
 
+    // Use non-blocking reads with a timeout watchdog.
+    // After process exits we switch to blocking to guarantee all output is drained —
+    // this fixes the Windows race where proc_get_status returns running=false before
+    // pipe buffers are fully flushed, causing stderr to appear empty.
     stream_set_blocking($pipes[1], 0);
     stream_set_blocking($pipes[2], 0);
 
@@ -94,21 +98,27 @@ function run_cmd($cmd, $stdin = '', $timeout = 30) {
         $stderr .= stream_get_contents($pipes[2]);
 
         if (!$status['running']) {
+            // Process finished — switch to blocking and drain completely
+            stream_set_blocking($pipes[1], 1);
+            stream_set_blocking($pipes[2], 1);
+            $stdout .= stream_get_contents($pipes[1]);
+            $stderr .= stream_get_contents($pipes[2]);
             break;
         }
 
         if ((time() - $start) >= $timeout) {
             proc_terminate($process, 9);
             $terminated = true;
+            // Still drain whatever was written before kill
+            stream_set_blocking($pipes[1], 1);
+            stream_set_blocking($pipes[2], 1);
+            $stdout .= stream_get_contents($pipes[1]);
+            $stderr .= stream_get_contents($pipes[2]);
             break;
         }
 
-        usleep(50000); // 50 ms
+        usleep(20000); // 20ms poll — faster response
     }
-
-    // Drain any remaining output
-    $stdout .= stream_get_contents($pipes[1]);
-    $stderr .= stream_get_contents($pipes[2]);
 
     fclose($pipes[1]);
     fclose($pipes[2]);
