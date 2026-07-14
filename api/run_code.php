@@ -115,37 +115,33 @@ function node_bin() {
 }
 
 /**
- * Detect the best available GCC binary.
- * Prefers the 64-bit mingw64 GCC over the legacy 32-bit MinGW,
- * which fails with "invalid instruction suffix for push" on modern code.
+ * Return raw path to the best 64-bit GCC (no shell quoting — array proc_open handles it).
  */
-function gcc_bin() {
-    // Explicit 64-bit mingw64 path first (avoids old MinGW on PATH)
+function gcc_bin_path() {
     $candidates = [
         'C:\\ProgramData\\mingw64\\mingw64\\bin\\gcc.exe',
         'C:\\msys64\\mingw64\\bin\\gcc.exe',
         'C:\\msys64\\ucrt64\\bin\\gcc.exe',
     ];
     foreach ($candidates as $path) {
-        if (file_exists($path)) return '"' . $path . '"';
+        if (file_exists($path)) return $path;
     }
-    // Fallback: whatever is on PATH (works fine inside Docker/Linux)
-    return 'gcc';
+    return 'gcc'; // Linux/Docker fallback
 }
 
 /**
- * Detect the best available G++ binary.
+ * Return raw path to the best 64-bit G++.
  */
-function gpp_bin() {
+function gpp_bin_path() {
     $candidates = [
         'C:\\ProgramData\\mingw64\\mingw64\\bin\\g++.exe',
         'C:\\msys64\\mingw64\\bin\\g++.exe',
         'C:\\msys64\\ucrt64\\bin\\g++.exe',
     ];
     foreach ($candidates as $path) {
-        if (file_exists($path)) return '"' . $path . '"';
+        if (file_exists($path)) return $path;
     }
-    return 'g++';
+    return 'g++'; // Linux/Docker fallback
 }
 
 // ----- HTML/CSS preview - no execution needed -----

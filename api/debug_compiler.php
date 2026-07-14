@@ -5,7 +5,7 @@ header('Content-Type: text/plain');
 $gcc = 'C:\\ProgramData\\mingw64\\mingw64\\bin\\gcc.exe';
 
 // Write a test C file
-$temp_dir = sys_get_temp_dir() . '\\nexus_debug_' . uniqid();
+$temp_dir = realpath(sys_get_temp_dir()) . '\\nexus_debug_' . uniqid();
 mkdir($temp_dir, 0777, true);
 $src = $temp_dir . '\\test.c';
 $bin = $temp_dir . '\\test.exe';
@@ -27,7 +27,7 @@ $descriptorspec = [
     2 => ['pipe', 'w'],
 ];
 
-$process = proc_open($cmd_parts, $descriptorspec, $pipes);
+$process = proc_open([$gcc, $src, '-o', $bin, '-lm'], $descriptorspec, $pipes);
 if (!is_resource($process)) {
     echo "proc_open FAILED\n";
 } else {
