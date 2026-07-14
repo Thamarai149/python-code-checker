@@ -936,26 +936,35 @@ if (isset($_GET['share_id'])) {
         async function changeLanguage() {
             const langSelect = document.getElementById('language');
             const targetLang = langSelect.value;
-            
+
+            // Always update currentLanguage immediately so executeWorkspace()
+            // always uses the correct language regardless of editor state.
+            currentLanguage = targetLang;
+            localStorage.setItem('nexus_autosave_lang', currentLanguage);
+            updateExplorerLabel();
+
             if (editor) {
                 const currentContent = editor.getValue().trim();
                 const templateCode = templates[targetLang] || '';
-                
-                // Ask user if not empty
-                if (currentContent !== "" && currentContent !== templates[currentLanguage]) {
-                    const confirmSwap = await Nexus.confirm("Synchronize editor window template? Current code adjustments will be reset.");
-                    if (!confirmSwap) {
-                        langSelect.value = currentLanguage;
+
+                // Only ask about loading the starter template — language is already switched.
+                if (currentContent !== '' && currentContent !== (templates[targetLang] || '')) {
+                    const loadTemplate = await Nexus.confirm(
+                        `Switch to <strong>${targetLang.toUpperCase()}</strong> starter template?<br><small style="color:var(--text-dim)">Your current code will be replaced.</small>`
+                    );
+                    if (!loadTemplate) {
+                        // Keep language switched but preserve code — just update syntax highlight
+                        if (window.monaco && editor.getModel) {
+                            monaco.editor.setModelLanguage(editor.getModel(), mapMonacoLanguage(currentLanguage));
+                        }
                         return;
                     }
                 }
-                
-                currentLanguage = targetLang;
-                localStorage.setItem('nexus_autosave_lang', currentLanguage);
-                
+
                 editor.setValue(templateCode);
-                monaco.editor.setModelLanguage(editor.getModel(), mapMonacoLanguage(currentLanguage));
-                updateExplorerLabel();
+                if (window.monaco && editor.getModel) {
+                    monaco.editor.setModelLanguage(editor.getModel(), mapMonacoLanguage(currentLanguage));
+                }
             }
         }
 
