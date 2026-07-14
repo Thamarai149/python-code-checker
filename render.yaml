@@ -2,4 +2,9 @@ services:
   - type: web
     name: nexus-studio
     runtime: docker
-
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: PHP_DISPLAY_ERRORS
+        value: "0"

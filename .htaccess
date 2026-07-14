@@ -1,0 +1,27 @@
+Options -Indexes
+
+# Enable URL rewriting
+RewriteEngine On
+
+# Allow direct access to existing files & directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Set CORS and cache headers for API responses
+<FilesMatch "\.(php)$">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "POST, GET, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type"
+</FilesMatch>
+
+# Security: Block direct access to data/ directory
+<IfModule mod_rewrite.c>
+    RewriteRule ^data/ - [F,L]
+</IfModule>
+
+# PHP settings
+php_flag display_errors Off
+php_value max_execution_time 60
+php_value post_max_size 20M
+php_value upload_max_filesize 10M
+php_value memory_limit 256M
